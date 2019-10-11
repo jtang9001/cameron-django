@@ -3,16 +3,26 @@
         <title>Is anyone in Cam?</title>
     </head>
     <body>
-        {% for place, people in places.items %}
-            <p>
-                <h3>{{ place }}</h3>
-                <ul>
-                    {% for person in people %}
-                    <li>{{ person }}</li>
-                    {% endfor %}
-                </ul>
-            </p>
-        {% endfor %}
+        {% if places %}
+            {% for place, checkins in places.items %}
+                <p>
+                    <h3>{{ place }}</h3>
+                    <ul>
+                        {% for checkin in checkins %}
+                        <li>{{ checkin.person }} - <i>{{ checkin.time|timesince }} ago </i></li>
+                        {% endfor %}
+                    </ul>
+                </p>
+            {% endfor %}
+        {% else %}
+            <h3>Nobody's checked in.</h3>
+        {% endif %}
+        
+        <h3>Check In</h3>
+        <form method="post">{% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="Check in">
+        </form>
 
     </body> 
 </html>

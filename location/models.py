@@ -1,5 +1,5 @@
-from django.db import models
 import datetime
+from django.db import models
 from django.utils import timezone
 
 class Place(models.Model):
@@ -10,7 +10,7 @@ class Place(models.Model):
 
 class CheckIn(models.Model):
     person = models.CharField(max_length=50)
-    place = models.ForeignKey(Place, on_delete=models.SET_NULL, blank=True, null=True)
+    place = models.ForeignKey(Place, on_delete=models.CASCADE)
     time = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
