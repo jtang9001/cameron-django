@@ -25,7 +25,7 @@ SECRET_KEY = '1vr=4c3jiyr(3t=4mi2=i-7&r76$j&*5+k57=y!nssu0*pf#!z'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['jtang9001.pythonanywhere.com']
+ALLOWED_HOSTS = ['jtang9001.pythonanywhere.com', 'localhost']
 
 
 # Application definition
