@@ -10,11 +10,11 @@ class Place(models.Model):
 
 class CheckIn(models.Model):
     person = models.CharField(max_length=50)
-    location = models.ForeignKey(Place, on_delete=models.SET_NULL, blank=True, null=True)
-    time = models.DateTimeField(auto_now_add=True)
+    place = models.ForeignKey(Place, on_delete=models.SET_NULL, blank=True, null=True)
+    time = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return "{} at {} at {}".format(self.person, self.location, self.time)
+        return "{} at {} at {}".format(self.person, self.place, self.time)
 
     def check_in_is_fresh(self):
-        return self.time >= timezone.now() - datetime.timedelta(hours=2)
+        return self.time >= timezone.now() - timezone.timedelta(hours=2)

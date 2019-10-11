@@ -3,36 +3,16 @@
         <title>Is anyone in Cam?</title>
     </head>
     <body>
-        {% for place in places %}
-            {% if place.people|length > 0 %}
-                <p>
-                    <h3>{{ place.name }}</h3>
-                    <ul>
-                        {% for person in place.people %}
-                        <li>{{ person }}</li>
-                        {% endfor %}
-                    </ul>
-                </p>
-            {% endif %}
+        {% for place, people in places.items %}
+            <p>
+                <h3>{{ place }}</h3>
+                <ul>
+                    {% for person in people %}
+                    <li>{{ person }}</li>
+                    {% endfor %}
+                </ul>
+            </p>
         {% endfor %}
 
-        <form action="" method="POST" novalidate>
-            {{ form.hidden_tag() }}
-            <p>
-                {{ form.name.label }}<br>
-                {{ form.name(size=32) }}<br>
-                {% for error in form.name.errors %}
-                <span style="color: red;">{{ error }}</span>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.place.label }}<br>
-                {{ form.place() }}
-                {% for error in form.place.errors %}
-                <span style="color: red;">{{ error }}</span>
-                {% endfor %}
-            </p>
-            <p>{{ form.submit() }}</p>
-        </form>
     </body> 
 </html>
