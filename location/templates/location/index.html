@@ -12,7 +12,7 @@
                             {% if checkin.scratched %}
                                 <li> <s>{{ checkin.person }} - <i>{{ checkin.time|timesince }} ago </i></s></li>
                             {% else %}
-                                <li>{{ checkin.person }} - <i>{{ checkin.time|timesince }} ago </i> <a href="scratch/{{ checkin.person }}">Scratch</a></li> 
+                                <li>{{ checkin.person }} - <i>{{ checkin.time|timesince }} ago </i> <a href="scratch/{{ checkin.person }}">❌</a></li> 
                             {% endif %}
                         {% endfor %}
                     </ul>
