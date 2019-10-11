@@ -5,7 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from .models import Place, CheckIn
 from .forms import CheckInForm
 
-def getPlaceFromSession():
+def getPlaceFromSession(request):
     try:
         return Place.objects.get(name=request.session.get("place"))
     except ObjectDoesNotExist:
@@ -38,7 +38,7 @@ def index(request):
 
         form = CheckInForm(initial={
             "person": request.session.get("person"),
-            "place": getPlaceFromSession()
+            "place": getPlaceFromSession(request)
         })
 
         context = {"places": places, "form": form}
