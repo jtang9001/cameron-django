@@ -31,7 +31,9 @@ def index(request):
 
         form = CheckInForm(initial={
             "person": request.session.get("person"),
-            "place": Place.objects.get_or_none(name=request.session.get("place"))
+            "place": (Place.objects.get(name=request.session.get("place")) 
+                        if request.session.get("place") is not None 
+                        else None)
         })
 
         context = {"places": places, "form": form}
