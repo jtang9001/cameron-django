@@ -9,7 +9,11 @@
                     <h3>{{ place }}</h3>
                     <ul>
                         {% for checkin in checkins %}
-                        <li>{{ checkin.person }} - <i>{{ checkin.time|timesince }} ago </i></li>
+                            {% if checkin.scratched %}
+                                <li> <s>{{ checkin.person }} - <i>{{ checkin.time|timesince }} ago </i></s></li>
+                            {% else %}
+                                <li>{{ checkin.person }} - <i>{{ checkin.time|timesince }} ago </i> <a href="scratch/{{ checkin.person }}">Scratch</a></li> 
+                            {% endif %}
                         {% endfor %}
                     </ul>
                 </p>

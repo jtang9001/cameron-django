@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
 from .models import Place, CheckIn
@@ -14,6 +14,7 @@ def index(request):
                 person = form.cleaned_data["person"],
                 defaults = form.cleaned_data
             )
+            newCheckIn.scratched = False
             newCheckIn.time = timezone.now()
             newCheckIn.save()
             return HttpResponseRedirect("/")
@@ -29,3 +30,11 @@ def index(request):
         context = {"places": places, "form": CheckInForm}
 
         return render(request, "location/index.html", context)
+
+def scratchCheckIn(request, name):
+    checkin = get_object_or_404(CheckIn, person = name)
+    checkin.scratched = True
+    checkin.save()
+    print(checkin)
+    return HttpResponseRedirect("/")
+ 

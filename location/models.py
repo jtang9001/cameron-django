@@ -12,6 +12,7 @@ class CheckIn(models.Model):
     person = models.CharField(max_length=50)
     place = models.ForeignKey(Place, on_delete=models.CASCADE)
     time = models.DateTimeField(default=timezone.now)
+    scratched = models.BooleanField(default=False)
 
     def __str__(self):
         return "{} at {} at {}".format(self.person, self.place, self.time)
