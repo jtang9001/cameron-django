@@ -1,8 +1,15 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 from .models import Place, CheckIn
 from .forms import CheckInForm
+
+def getPlaceFromSession():
+    try:
+        return Place.objects.get(name=request.session.get("place"))
+    except ObjectDoesNotExist:
+        return None
 
 
 def index(request):
@@ -31,9 +38,7 @@ def index(request):
 
         form = CheckInForm(initial={
             "person": request.session.get("person"),
-            "place": (Place.objects.get(name=request.session.get("place")) 
-                        if request.session.get("place") is not None 
-                        else None)
+            "place": getPlaceFromSession()
         })
 
         context = {"places": places, "form": form}
