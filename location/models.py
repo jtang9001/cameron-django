@@ -8,6 +8,9 @@ class Place(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ['name']
+
 class CheckIn(models.Model):
     person = models.CharField(max_length=50)
     place = models.ForeignKey(Place, on_delete=models.CASCADE)
