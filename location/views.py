@@ -17,6 +17,8 @@ def index(request):
             newCheckIn.scratched = False
             newCheckIn.time = timezone.now()
             newCheckIn.save()
+            request.session["person"] = form.cleaned_data["person"]
+            request.session["place"] = form.cleaned_data["place"].name
             return HttpResponseRedirect("/")
 
     else:
@@ -27,7 +29,12 @@ def index(request):
         for checkin in freshCheckIns:
             places[checkin.place.name].append(checkin)
 
-        context = {"places": places, "form": CheckInForm}
+        form = CheckInForm(initial={
+            "person": request.session.get("person"),
+            "place": Place.objects.get(name=request.session.get("place"))
+        })
+
+        context = {"places": places, "form": form}
 
         return render(request, "location/index.html", context)
 
