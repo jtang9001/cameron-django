@@ -22,19 +22,18 @@ def index(request):
                 defaults = form.cleaned_data
             )
             newCheckIn.scratched = False
-            newCheckIn.time = timezone.now()
             newCheckIn.save()
             request.session["person"] = form.cleaned_data["person"]
             request.session["place"] = form.cleaned_data["place"].name
             return HttpResponseRedirect("/")
 
     else:
-        timediff = timezone.now() - timezone.timedelta(hours = 2)
-        freshCheckIns = CheckIn.objects.filter(time__gte = timediff)
-        places = {checkin.place.name: [] for checkin in freshCheckIns}
+        checkIns = CheckIn.objects.all()
+        places = {checkin.place.name: [] for checkin in checkIns}
         
-        for checkin in freshCheckIns:
-            places[checkin.place.name].append(checkin)
+        for checkin in checkIns:
+            if checkin.is_fresh():
+                places[checkin.place.name].append(checkin)
 
         form = CheckInForm(initial={
             "person": request.session.get("person"),
