@@ -22,9 +22,17 @@
                         <ul>
                             {% for checkin in checkins %}
                                 {% if checkin.scratched %}
-                                    <li> <s>{{ checkin.person }} - <i>{{ checkin.time|timesince }} ago </i></s></li>
+                                    {% if checkin.is_future_fresh %}
+                                        <li><s>{{ checkin.person }} - <i>Planned for {{ checkin.start_time|time }}</i></s></li> 
+                                    {% elif checkin.is_fresh %}
+                                        <li><s>{{ checkin.person }} - <i>Until {{ checkin.end_time|time }}</i></s></li> 
+                                    {% endif %}
                                 {% else %}
-                                    <li>{{ checkin.person }} - <i>{{ checkin.time|timesince }} ago </i> <a href="scratch/{{ checkin.person }}">❌</a></li> 
+                                    {% if checkin.is_future_fresh %}
+                                        <li>{{ checkin.person }} - <i>Planned for {{ checkin.start_time|time }} to {{ checkin.end_time|time }} </i> <a href="scratch/{{ checkin.person }}">❌</a></li> 
+                                    {% elif checkin.is_fresh %}
+                                        <li>{{ checkin.person }} - <i>Until {{ checkin.end_time|time }} </i><a href="scratch/{{ checkin.person }}">❌</a></li> 
+                                    {% endif %}
                                 {% endif %}
                             {% endfor %}
                         </ul>
@@ -37,7 +45,7 @@
             <h4>Check In</h4>
             <div>
                 <form method="post">{% csrf_token %}
-                    {{ form|materializecss }}
+                    {{ form.as_p }}
                     <input type="submit" value="Check in">
                 </form>
             </div>
@@ -55,12 +63,18 @@
             $('select').formSelect();
         });
         $(document).ready(function(){
-            $('.datepicker').datepicker();
+            $('.datepicker').datepicker(
+                {
+                    format: "yyyy-mm-dd",
+                    autoClose: true
+                }
+            );
         });
         $(document).ready(function(){
             $('.timepicker').timepicker(
                 {
-                    twelveHour: false
+                    twelveHour: false,
+                    autoClose: true
                 }
             );
         });
