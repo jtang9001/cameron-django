@@ -12,12 +12,12 @@ def getPlaceFromSession(request):
         return None
 
 def render_for_get(request, form):
-    checkIns = CheckIn.objects.all()
-    places = {checkin.place.name: [] for checkin in checkIns}
+    allCheckIns = CheckIn.objects.all()
+    freshCheckIns = [checkin for checkin in allCheckIns if checkin.is_fresh() or checkin.is_future_fresh()]
+    places = {checkin.place: [] for checkin in freshCheckIns}
     
-    for checkin in checkIns:
-        if checkin.is_fresh() or checkin.is_future_fresh():
-            places[checkin.place.name].append(checkin)
+    for checkin in freshCheckIns:
+        places[checkin.place].append(checkin)
 
     for place, checkins in places.items():
         checkins.sort(key = lambda checkin: checkin.start_time)

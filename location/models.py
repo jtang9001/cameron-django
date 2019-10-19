@@ -8,6 +8,10 @@ def two_hrs_later():
 
 class Place(models.Model):
     name = models.CharField(max_length=25)
+    color = models.CharField(
+        max_length=25, 
+        default="grey lighten-5"
+    )
 
     def __str__(self):
         return self.name
