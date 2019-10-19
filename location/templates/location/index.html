@@ -16,7 +16,7 @@
 
         <div class="container">
             <div class="row">
-                <div class="col s12 m6 l8">
+                <div class="col s12 m12 l8 xl8">
                     {% if places %}
                         {% for place, checkins in places.items %}
                             <div class="card {{ place.color }}">
@@ -26,23 +26,23 @@
                                         {% for checkin in checkins %}
                                             {% if checkin.scratched %}
                                                 {% if checkin.is_future_fresh %}
-                                                    <li class="collection-item" style="color:lightgray">
-                                                        <s>{{ checkin.person }} - <i>Planned for {{ checkin.start_time|time }}</i></s>
+                                                    <li class="collection-item" style="color:lightgray; word-wrap: normal;">
+                                                        <s>{{ checkin.person }}<br><i>Planned: {{ checkin.start_time|time }}</i></s>
                                                     </li> 
                                                 {% elif checkin.is_fresh %}
-                                                    <li class="collection-item" style="color:lightgray">
-                                                        <s>{{ checkin.person }} - <i>Until {{ checkin.end_time|time }}</i></s>
+                                                    <li class="collection-item" style="color:lightgray; word-wrap: normal;">
+                                                        <s>{{ checkin.person }}<br><i>Until {{ checkin.end_time|time }}</i></s>
                                                     </li> 
                                                 {% endif %}
                                             {% else %}
                                                 {% if checkin.is_future_fresh %}
-                                                    <li class="collection-item">
-                                                        <div>{{ checkin.person }} - <i>Planned for {{ checkin.start_time|time }} to {{ checkin.end_time|time }}</i>
+                                                    <li class="collection-item" style="word-wrap: normal;">
+                                                        <div>{{ checkin.person }}<br><i>Planned: {{ checkin.start_time|time }} - {{ checkin.end_time|time }}</i>
                                                         <a href="scratch/{{ checkin.person }}" class="secondary-content"><i class="material-icons">close</i></a></div>
                                                     </li> 
                                                 {% elif checkin.is_fresh %}
-                                                    <li class="collection-item">
-                                                        <div><b>{{ checkin.person }}</b> - <i>Until {{ checkin.end_time|time }} </i>
+                                                    <li class="collection-item" style="word-wrap: normal;">
+                                                        <div><b>{{ checkin.person }}</b><br><i>Until {{ checkin.end_time|time }} </i>
                                                         <a href="scratch/{{ checkin.person }}" class="secondary-content"><i class="material-icons">close</i></a></div>
                                                     </li> 
                                                 {% endif %}
@@ -61,7 +61,7 @@
                 {% endif %}
                 </div>
                 
-                <div class="col s12 m6 l4">
+                <div class="col s12 m12 l4 xl4">
                     {% if form.errors %}
                         <div class="card-panel red darken-1">
                             <span class="white-text">
