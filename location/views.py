@@ -56,4 +56,19 @@ def scratchCheckIn(request, name):
     checkin.save()
     print(checkin)
     return HttpResponseRedirect("/")
+
+def startPlannedCheckIn(request, name):
+    checkin = get_object_or_404(CheckIn, person = name)
+    checkin.start_time = timezone.now()
+    checkin.scratched = False
+    checkin.save()
+    print(checkin)
+    return HttpResponseRedirect("/")
+
+def restoreCheckIn(request, name):
+    checkin = get_object_or_404(CheckIn, person = name)
+    checkin.scratched = False
+    checkin.save()
+    print(checkin)
+    return HttpResponseRedirect("/")
  

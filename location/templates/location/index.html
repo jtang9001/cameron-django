@@ -28,22 +28,30 @@
                                                 {% if checkin.is_future_fresh %}
                                                     <li class="collection-item" style="color:lightgray; word-wrap: normal;">
                                                         <s>{{ checkin.person }}<br><i>Planned: {{ checkin.start_time|time }}</i></s>
+                                                        <a href="{% url 'restore' checkin.person %}" class="secondary-content"><i class="material-icons">settings_backup_restore</i></a>
+                                                        <a href="{% url 'start' checkin.person %}" class="secondary-content"><i class="material-icons left">keyboard_tab</i></a>
                                                     </li> 
                                                 {% elif checkin.is_fresh %}
                                                     <li class="collection-item" style="color:lightgray; word-wrap: normal;">
                                                         <s>{{ checkin.person }}<br><i>Until {{ checkin.end_time|time }}</i></s>
+                                                        <a href="{% url 'restore' checkin.person %}" class="secondary-content"><i class="material-icons">settings_backup_restore</i></a>
                                                     </li> 
                                                 {% endif %}
                                             {% else %}
                                                 {% if checkin.is_future_fresh %}
                                                     <li class="collection-item" style="word-wrap: normal;">
-                                                        <div>{{ checkin.person }}<br><i>Planned: {{ checkin.start_time|time }} - {{ checkin.end_time|time }}</i>
-                                                        <a href="scratch/{{ checkin.person }}" class="secondary-content"><i class="material-icons">close</i></a></div>
+                                                        <div>
+                                                            {{ checkin.person }}<br><i>Planned: {{ checkin.start_time|time }} - {{ checkin.end_time|time }}</i>
+                                                            <a href="{% url 'scratch' checkin.person %}" class="secondary-content"><i class="material-icons">close</i></a>
+                                                            <a href="{% url 'start' checkin.person %}" class="secondary-content"><i class="material-icons left">keyboard_tab</i></a>
+                                                        </div>
                                                     </li> 
                                                 {% elif checkin.is_fresh %}
                                                     <li class="collection-item" style="word-wrap: normal;">
-                                                        <div><b>{{ checkin.person }}</b><br><i>Until {{ checkin.end_time|time }} </i>
-                                                        <a href="scratch/{{ checkin.person }}" class="secondary-content"><i class="material-icons">close</i></a></div>
+                                                        <div>
+                                                            <b>{{ checkin.person }}</b><br><i>Until {{ checkin.end_time|time }} </i>
+                                                            <a href="{% url 'scratch' checkin.person %}" class="secondary-content"><i class="material-icons">close</i></a>
+                                                        </div>
                                                     </li> 
                                                 {% endif %}
                                             {% endif %}
