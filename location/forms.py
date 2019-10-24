@@ -22,7 +22,7 @@ class CheckInForm(ModelForm):
             date_attrs={"class": "datepicker"},
             time_format='%H:%M'
         ),
-        #initial=two_hrs_later,
+        initial=two_hrs_later,
         validators=[is_later_than_now],
         required=False
     )

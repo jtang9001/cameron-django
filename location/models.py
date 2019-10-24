@@ -25,7 +25,7 @@ class CheckIn(models.Model):
     place = models.ForeignKey(Place, on_delete=models.CASCADE)
     start_time = models.DateTimeField(default=timezone.now)
     end_time = models.DateTimeField(
-        #default=two_hrs_later,
+        default=two_hrs_later,
         blank=True, null=True
     )
     scratched = models.BooleanField(default=False)
