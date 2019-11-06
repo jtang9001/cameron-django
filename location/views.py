@@ -66,8 +66,12 @@ def index(request):
             return render_for_get(request, form)
 
     else:
+        try: 
+            name = request.session["person"]
+        except KeyError:
+            name = None
         form = CheckInForm(initial={
-            "name": request.session["person"],
+            "name": name,
             "place": getPlaceFromSession(request)
         })
         return render_for_get(request, form)
