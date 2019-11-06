@@ -10,20 +10,23 @@ class Person(models.Model):
     name = models.CharField(max_length=25)
 
     def getScore(self):
-        totalDuration = timezone.timedelta(minutes=0)
-        checkIns = list(self.checkin_set.all().order_by("start_time"))
-        currentStart = checkIns[0].start_time
-        currentEnd = checkIns[0].end_time
-        for i in range(1, len(checkIns)):
-            if overlaps(checkIns[i], checkIns[i-1]):
-                currentEnd = checkIns[i].end_time
-            else:
-                totalDuration += (currentEnd - currentStart)
-                currentStart = checkIns[i].start_time
-                currentEnd = checkIns[i].end_time
+        try:
+            totalDuration = timezone.timedelta(minutes=0)
+            checkIns = list(self.checkin_set.all().order_by("start_time"))
+            currentStart = checkIns[0].start_time
+            currentEnd = checkIns[0].end_time
+            for i in range(1, len(checkIns)):
+                if overlaps(checkIns[i], checkIns[i-1]):
+                    currentEnd = checkIns[i].end_time
+                else:
+                    totalDuration += (currentEnd - currentStart)
+                    currentStart = checkIns[i].start_time
+                    currentEnd = checkIns[i].end_time
 
-        totalDuration += (currentEnd - currentStart)
-        return int(round(totalDuration.total_seconds()/60))
+            totalDuration += (currentEnd - currentStart)
+            return int(round(totalDuration.total_seconds()/60))
+        except Exception:
+            return -1
 
     def __str__(self):
         return self.name
