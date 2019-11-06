@@ -44,7 +44,7 @@ class CheckInForm(ModelForm):
         if start_time and end_time:
             if start_time >= end_time:
                 raise ValidationError("End time must be after start time.")
-            elif end_time - start_time > timezone.timedelta(hours=12):
+            elif end_time - start_time > timezone.timedelta(hours=6):
                 raise ValidationError("You are spending too long in one place!")
-            elif start_time - timezone.now() > timezone.timedelta(hours=12):
+            elif start_time - timezone.now() > timezone.timedelta(hours=15):
                 raise ValidationError("You are planning too far ahead!")
