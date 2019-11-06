@@ -1,12 +1,17 @@
-from django.forms import ModelForm, SplitDateTimeWidget, SplitDateTimeField, ValidationError
+from django.forms import *
 from django.utils import timezone
-from .models import CheckIn, two_hrs_later
+from .models import CheckIn, two_hrs_later, Place
 
 def is_later_than_now(val):
     if timezone.now() - val > timezone.timedelta(minutes=30):
         raise ValidationError("Date/time is too far in the past")
 
 class CheckInForm(ModelForm):
+    name = CharField(max_length=25)
+    place = ModelChoiceField(
+        Place.objects.all(),
+        widget = Select(attrs={"class": "browser-default"})
+    )
     start_time = SplitDateTimeField(
         widget = SplitDateTimeWidget(
             time_attrs={"class": "timepicker"},
@@ -29,7 +34,7 @@ class CheckInForm(ModelForm):
 
     class Meta:
         model = CheckIn
-        fields = ["person", "place", "start_time", "end_time"]
+        fields = ["name", "place", "start_time", "end_time"]
 
     def clean(self):
         cleaned_data = super().clean()
