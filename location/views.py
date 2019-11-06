@@ -56,7 +56,7 @@ def index(request):
                 if checkIn == newCheckIn:
                     continue
                 if overlaps(checkIn, newCheckIn):
-                    checkin.endtime = timezone.now()
+                    checkIn.end_time = timezone.now()
                     checkIn.scratched = True
                     checkIn.save()
 
@@ -79,7 +79,7 @@ def index(request):
 
 def scratchCheckIn(request, checkInPK):
     checkin = get_object_or_404(CheckIn, pk = checkInPK)
-    checkin.endtime = timezone.now()
+    checkin.end_time = timezone.now()
     checkin.scratched = True
     checkin.save()
     print(checkin)
@@ -95,7 +95,7 @@ def startPlannedCheckIn(request, checkInPK):
         if oldCheckIn == checkin:
             continue
         if overlaps(oldCheckIn, checkin):
-            oldCheckIn.endtime = timezone.now()
+            oldCheckIn.end_time = timezone.now()
             oldCheckIn.scratched = True
             oldCheckIn.save()
     print(checkin)
