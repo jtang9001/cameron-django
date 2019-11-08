@@ -117,20 +117,26 @@ def restoreCheckIn(request, checkInPK):
 def messenger(request):
     if request.method == "GET":
         print(request.GET)
-        if request.GET["hub.verify_token"] == FB_VERIFY_TOKEN:
-            return HttpResponse(request.GET['hub.challenge'])
-        else:
-            return HttpResponse("Invalid token", status=403)
+        try:
+            if request.GET["hub.verify_token"] == FB_VERIFY_TOKEN:
+                return HttpResponse(request.GET['hub.challenge'])
+            else:
+                return HttpResponse("Invalid token", status=403)
+        except Exception:
+            return HttpResponse("Invalid webhook formatting", status=403)
+    
     elif request.method == "POST":
         incoming_message = json.loads(request.body.decode('utf-8'))
         print(incoming_message)
-        for entry in incoming_message['entry']:
-            for message in entry['messaging']:
-                if 'message' in message:
-                    fb_user_id = message['sender']['id'] # sweet!
-                    fb_user_txt = message['message']['text']
-                    sendToMessenger(fb_user_id, fb_user_txt)
-        return HttpResponse("Webhook OK", status=200)
+        try:
+            for entry in incoming_message['entry']:
+                for message in entry['messaging']:
+                    userID = message['sender']['id']
+                    message = message['message']['text']
+                    sendToMessenger(userID, f"You said, '{message}'. I'm busy. Check back later.")
+            return HttpResponse("Webhook OK", status=200)
+        except Exception:
+            return HttpResponse("Webhook POST error", status=200)
 
 def sendToMessenger(userID, msg, msgType = "RESPONSE"):
     endpoint = f"https://graph.facebook.com/v5.0/me/messages?access_token={FB_ACCESS_TOKEN}"
