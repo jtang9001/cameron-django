@@ -5,6 +5,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
+from django.views.decorators.csrf import csrf_exempt
 from .models import Place, CheckIn, Person, overlaps
 from .forms import CheckInForm
 from .tokens import *
@@ -112,6 +113,7 @@ def restoreCheckIn(request, checkInPK):
     print(checkin)
     return HttpResponseRedirect("/")
 
+@csrf_exempt
 def messenger(request):
     if request.method == "GET":
         print(request.GET)
