@@ -124,6 +124,12 @@ def messenger(request):
     elif request.method == "POST":
         incoming_message = json.loads(request.body.decode('utf-8'))
         print(incoming_message)
+        for entry in incoming_message['entry']:
+            for message in entry['messaging']:
+                if 'message' in message:
+                    fb_user_id = message['sender']['id'] # sweet!
+                    fb_user_txt = message['message']['text']
+                    sendToMessenger(fb_user_id, fb_user_txt)
         return HttpResponse("Webhook OK", status=200)
 
 def sendToMessenger(userID, msg, msgType = "RESPONSE"):
