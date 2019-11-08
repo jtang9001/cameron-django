@@ -1,9 +1,13 @@
+import json
+import requests
+
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from .models import Place, CheckIn, Person, overlaps
 from .forms import CheckInForm
+from .tokens import *
 
 def getPlaceFromSession(request):
     try:
@@ -107,4 +111,29 @@ def restoreCheckIn(request, checkInPK):
     checkin.save()
     print(checkin)
     return HttpResponseRedirect("/")
- 
+
+def messenger(request):
+    if request.method == "GET":
+        print(request.GET)
+        if request.GET["hub.verify_token"] == FB_VERIFY_TOKEN:
+            return HttpResponse(request.GET['hub.challenge'])
+        else:
+            return HttpResponse("Invalid token", status=403)
+    elif request.method == "POST":
+        print(request.POST)
+        return HttpResponse("Webhook OK", status=200)
+
+def sendToMessenger(userID, msg, msgType = "RESPONSE"):
+    endpoint = f"https://graph.facebook.com/v5.0/me/messages?access_token={FB_ACCESS_TOKEN}"
+    response_msg = json.dumps(
+        {
+            "messaging_type": msgType,
+            "recipient": {"id":userID}, 
+            "message": {"text":msg}
+        }
+    )
+    status = requests.post(
+        endpoint, 
+        headers={"Content-Type": "application/json"},
+        data=response_msg)
+    print(status.json())

@@ -26,6 +26,8 @@ Temporary Items
 camdjvenv
 migrations
 
+tokens.py
+
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
