@@ -122,7 +122,8 @@ def messenger(request):
         else:
             return HttpResponse("Invalid token", status=403)
     elif request.method == "POST":
-        print(request.POST)
+        incoming_message = json.loads(request.body.decode('utf-8'))
+        print(incoming_message)
         return HttpResponse("Webhook OK", status=200)
 
 def sendToMessenger(userID, msg, msgType = "RESPONSE"):
