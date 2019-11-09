@@ -9,8 +9,8 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from .utils import two_hrs_later
 
-LOCATION_LOOKUP = ["whos in", "who is in"]
-PERSON_LOOKUP = ["wheres", "where is"]
+LOCATION_LOOKUP = ["whos in", "who is in", "who"]
+PERSON_LOOKUP = ["wheres", "where is", "where"]
 #CHECK_IN = [re.compile(r"(i will be |ill be |im |i am )?(in |at )?(?P<place>[a-z]+)")]
 #CHECK_IN = ["i will be", "ill be", "im", "i am", "in ", "at ", "until ", "till ", "til "]
 
