@@ -109,11 +109,18 @@ def handleMessage(user: Person, inMsg, nlp):
                         user.ensureNoOverlapsWith(newCheckIn)
                     elif nlp["entities"]["datetime"][0]["type"] == "interval":
                         start_time = parse_datetime(nlp["entities"]["datetime"][0]["from"]["value"]) if "from" in nlp["entities"]["datetime"][0] else timezone.now()
+                        if "to" in nlp["entities"]["datetime"][0]:
+                            if nlp["entities"]["datetime"][0]["to"]["grain"] == "hour":
+                                end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]["value"]) - timezone.timedelta(hours=1)
+                            else:
+                                end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]["value"])
+                        else:
+                            end_time = two_hrs_later(start_time)
                         newCheckIn = CheckIn(
                             person = user,
                             place = placeQ.first(),
                             start_time = start_time,
-                            end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]["value"]) if "to" in nlp["entities"]["datetime"][0] else two_hrs_later(start_time)
+                            end_time = end_time
                         )
                         newCheckIn.save()
                         user.ensureNoOverlapsWith(newCheckIn)
