@@ -77,7 +77,7 @@ def handleMessage(user: Person, inMsg):
         user.send(f"You said, '{inMsg}'. I don't understand, sorry!")
 
 def getNameFromPSID(psid):
-    endpoint = f"https://graph.facebook.com/{psid}?fields=name&access_token={FB_ACCESS_TOKEN}"
+    endpoint = f"https://graph.facebook.com/{psid}?fields=first_name&access_token={FB_ACCESS_TOKEN}"
     r = requests.get(endpoint)
     response = json.loads(request.body.decode('utf-8'))
     return response["name"]
