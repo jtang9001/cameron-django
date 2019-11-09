@@ -85,9 +85,9 @@ def handleMessage(user: Person, inMsg, nlp):
 
         if "every" in msg:
             for place in Place.objects.all():
-                if len(place.checkin_set.all() > 0):
+                if len(place.checkin_set.all()) > 0:
                     sendForPlace(user, place)
-        
+
         elif person is None:
             user.send("I don't know who that is :(")
 
