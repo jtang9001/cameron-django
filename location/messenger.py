@@ -1,7 +1,7 @@
 import requests
 import json
 
-from .models import Place
+from .models import Place, CheckIn
 from .tokens import FB_ACCESS_TOKEN
 
 
@@ -31,7 +31,7 @@ class MessengerUser:
             for place in matchingPlaces:
                 print(place)
 
-                checkins = place.checkin_set.all().order_by("end_time")
+                checkins = CheckIn.objects.filter(place = place)
                 freshCheckInStrs = [checkin.pretty() for checkin in checkins if checkin.is_fresh()]
                 futureCheckInStrs = [checkin.pretty() for checkin in checkins if checkin.is_future_fresh()]
 

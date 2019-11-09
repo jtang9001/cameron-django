@@ -61,7 +61,7 @@ class CheckIn(models.Model):
         return f"{self.person}: {timezone.make_aware(self.start_time.strftime('%H:%M'))} - {timezone.make_aware(self.end_time.strftime('%H:%M'))}"
 
     def is_fresh(self):
-        if self.end_time:
+        if self.end_time: #should always be in this branch since end_time is now mandatory.
             return self.start_time <= timezone.now() <= self.end_time
         else:
             return timezone.now() - timezone.timedelta(hours=2) <= self.start_time <= timezone.now()
