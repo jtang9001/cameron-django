@@ -62,7 +62,8 @@ class CheckIn(models.Model):
 
     def is_fresh(self):
         if self.end_time: #should always be in this branch since end_time is now mandatory.
-            return self.start_time <= timezone.now() <= self.end_time
+            #return self.start_time <= timezone.now() <= self.end_time
+            return True
         else:
             return timezone.now() - timezone.timedelta(hours=2) <= self.start_time <= timezone.now()
 
