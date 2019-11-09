@@ -30,7 +30,7 @@ def render_for_get(request, form):
     #allCheckIns = CheckIn.objects.all()
     freshCheckIns = [checkin for checkin in allCheckIns if checkin.is_fresh() or checkin.is_future_fresh()]
     places = {checkin.place: [] for checkin in freshCheckIns}
-    
+
     for checkin in freshCheckIns:
         places[checkin.place].append(checkin)
 
@@ -72,7 +72,7 @@ def index(request):
             return render_for_get(request, form)
 
     else:
-        try: 
+        try:
             name = request.session["person"]
         except KeyError:
             name = None
@@ -124,10 +124,12 @@ def messenger(request):
                 return HttpResponse("Invalid token", status=403)
         except Exception:
             return HttpResponse("Invalid webhook formatting", status=403)
-    
+
     elif request.method == "POST":
         incoming_message = json.loads(request.body.decode('utf-8'))
-        print("WEBHOOK RECEIVED:", json.dumps(incoming_message, sort_keys = True, indent = 4))
+        print("WEBHOOK RECEIVED:")
+        for line in json.dumps(incoming_message, sort_keys=True, indent=4).split("\n"):
+            print(line)
         try:
             for entry in incoming_message['entry']:
                 for message in entry['messaging']:
@@ -138,7 +140,7 @@ def messenger(request):
                     except ObjectDoesNotExist:
                         personName = getNameFromPSID(userID)
                         user, created = Person.objects.update_or_create(
-                            name = personName, 
+                            name = personName,
                             defaults = {"facebook_id": userID}
                         )
 

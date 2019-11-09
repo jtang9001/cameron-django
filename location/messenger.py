@@ -20,7 +20,7 @@ def isSubstringFor(string: str, arrOfSubstrings):
 
 def reMatchesFor(string: str, patterns):
     for pattern in patterns:
-        if pattern.search():
+        if pattern.search(string):
             return True
     return False
 
