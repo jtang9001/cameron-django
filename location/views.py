@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Place, CheckIn, Person
 from .forms import CheckInForm
 from .tokens import FB_VERIFY_TOKEN
-from .messenger import MessengerUser
+from .messenger import handleMessage, getNameFromPSID
 
 def getPlaceFromSession(request):
     try:
@@ -132,10 +132,18 @@ def messenger(request):
             for entry in incoming_message['entry']:
                 for message in entry['messaging']:
                     userID = message['sender']['id']
-                    user = MessengerUser(userID)
+
+                    try:
+                        user = Person.objects.get(facebook_id = userID)
+                    except ObjectDoesNotExist:
+                        personName = getNameFromPSID(userID)
+                        user, created = Person.objects.update_or_create(
+                            name = personName, 
+                            defaults = {"facebook_id": userID}
+                        )
 
                     message = message['message']['text']
-                    user.handleMessage(message)
+                    handleMessage(user, message)
             return HttpResponse("Webhook OK", status=200)
         except Exception:
             traceback.print_exc()

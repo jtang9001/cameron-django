@@ -1,19 +1,46 @@
 import datetime
+import json
+import requests
 from django.db import models
 from django.utils import timezone
 from datetime import date
 from .utils import two_hrs_later
+from .tokens import FB_ACCESS_TOKEN
 
 
 class Person(models.Model):
     name = models.CharField(max_length=25)
+    facebook_id = models.CharField(max_length=100)
+    state = models.CharField(max_length=25)
+    last_state_change = models.DateTimeField(auto_now=True)
+
+
+
+    def send(self, outMsg, msgType = "RESPONSE"):
+        print("OUT:", outMsg)
+        endpoint = f"https://graph.facebook.com/v5.0/me/messages?access_token={FB_ACCESS_TOKEN}"
+        response_msg = json.dumps(
+            {
+                "messaging_type": msgType,
+                "recipient": {"id": self.facebook_id},
+                "message": {"text": outMsg}
+            }
+        )
+        status = requests.post(
+            endpoint,
+            headers={"Content-Type": "application/json"},
+            data=response_msg)
+        print(status.json())
 
     def getScore(self):
         try:
             totalDuration = timezone.timedelta(minutes=0)
+
             checkIns = list(self.checkin_set.all().order_by("start_time"))
+
             currentStart = checkIns[0].start_time
             currentEnd = checkIns[0].end_time
+
             for i in range(1, len(checkIns)):
                 if checkIns[i].overlaps(checkIns[i-1]):
                     currentEnd = checkIns[i].end_time
@@ -23,7 +50,9 @@ class Person(models.Model):
                     currentEnd = checkIns[i].end_time
 
             totalDuration += (currentEnd - currentStart)
+
             return int(round(totalDuration.total_seconds()/60))
+
         except Exception:
             return -1
 
