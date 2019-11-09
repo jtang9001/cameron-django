@@ -14,6 +14,7 @@ class MessengerUser:
     
     def handleMessage(self, inMsg):
         msg = cleanMsg(inMsg)
+        print(msg)
 
         if "whos in" in msg:
             location = " ".join(msg.split()[2:])
@@ -23,7 +24,7 @@ class MessengerUser:
                 self.send("I don't know where you mean :(")
                 return
             elif len(matchingPlaces) > 1:
-                self.send("More than one place was found!")
+                self.send("More than one matching place was found!")
             
             for place in matchingPlaces:
                 self.send(f"Here's who's in {place.name}:")
