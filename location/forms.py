@@ -1,6 +1,7 @@
 from django.forms import *
 from django.utils import timezone
-from .models import CheckIn, two_hrs_later, Place
+from .models import CheckIn, Place
+from .utils import two_hrs_later
 
 
 class CheckInForm(ModelForm):

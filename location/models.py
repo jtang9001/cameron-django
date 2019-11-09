@@ -89,6 +89,15 @@ class Place(models.Model):
     def __str__(self):
         return self.name
 
+    def hasFreshCheckIns(self):
+        return any(checkin.is_fresh() for checkin in self.checkin_set.all())
+    
+    def hasFutureCheckIns(self):
+        return any(checkin.is_future_fresh() for checkin in self.checkin_set.all())
+
+    def hasRelevantCheckIns(self):
+        return self.hasFreshCheckIns() or self.hasFutureCheckIns()
+
     class Meta:
         ordering = ['name']
 
