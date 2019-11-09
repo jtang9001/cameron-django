@@ -51,7 +51,6 @@ def sendForPlace(user, place):
 
     elif len(freshCheckIns) == 0 and len(futureCheckIns) == 0:
         user.send(f"Nobody's checked into {place.name}.")
-        user.state = "checking_in"
 
 def sendForPerson(user, person):
     checkins = person.checkin_set.all()
@@ -84,7 +83,12 @@ def handleMessage(user: Person, inMsg, nlp):
         name = removeSubstrings(msg, PERSON_LOOKUP)
         person = Person.objects.filter(name__istartswith = name).first()
 
-        if person is None:
+        if "every" in msg:
+            for place in Place.objects.all():
+                if len(place.checkin_set.all() > 0):
+                    sendForPlace(user, place)
+        
+        elif person is None:
             user.send("I don't know who that is :(")
 
         else:
