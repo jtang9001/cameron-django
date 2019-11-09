@@ -32,40 +32,22 @@ class MessengerUser:
                 print(place)
 
                 checkins = place.checkin_set.all().order_by("end_time")
+                freshCheckInStrs = [checkin.pretty() for checkin in checkins if checkin.is_fresh()]
+                futureCheckInStrs = [checkin.pretty() for checkin in checkins if checkin.is_future_fresh()]
 
-                self.send(f"Here's who's in {place.name}:")
+                print(len(freshCheckInStrs), len(futureCheckInStrs))
 
-                self.send(
-                    "\n".join(
-                        checkin.pretty() for checkin in checkins if checkin.is_fresh()
-                    )
-                )
+                if len(freshCheckInStrs) > 0:
+                    self.send(f"Here's who's in {place.name}:")
+                    self.send("\n".join(freshCheckInStrs))
 
-                # freshCheckIns = (checkin for checkin in checkins if checkin.is_fresh())
-                # futureCheckIns = (checkin for checkin in checkins if checkin.is_future_fresh())
+                if len(futureCheckInStrs) > 0:
+                    self.send(f"Here's who will be in {place.name}:")
+                    self.send("\n".join(futureCheckInStrs))
 
-                # print(len(freshCheckIns), len(futureCheckIns))
-
-                # if len(freshCheckIns) > 0:
-                #     self.send(f"Here's who's in {place.name}:")
-
-                #     self.send(
-                #         "\n".join(
-                #             checkin.pretty() for checkin in freshCheckIns
-                #         )
-                #     )
-
-                # if len(futureCheckIns) > 0:
-                #     self.send(f"Here's who will be in {place.name}:")
-                #     self.send(
-                #         "\n".join(
-                #             checkin.pretty() for checkin in futureCheckIns
-                #         )
-                #     )
-
-                # elif len(freshCheckIns) == 0 and len(futureCheckIns) == 0:
-                #     self.send(f"Nobody's checked into {place.name}. Would you like to?")
-                #     self.state = "checking_in"
+                elif len(freshCheckInStrs) == 0 and len(futureCheckInStrs) == 0:
+                    self.send(f"Nobody's checked into {place.name}. Would you like to?")
+                    self.state = "checking_in"
 
         else:
             self.send(f"You said, '{inMsg}'. I don't understand, sorry!")

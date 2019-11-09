@@ -132,6 +132,7 @@ def messenger(request):
                 for message in entry['messaging']:
                     userID = message['sender']['id']
                     user = MessengerUser(userID)
+                    
                     message = message['message']['text']
                     user.handleMessage(message)
             return HttpResponse("Webhook OK", status=200)

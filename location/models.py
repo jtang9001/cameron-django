@@ -58,7 +58,7 @@ class CheckIn(models.Model):
         return f"{self.person} at {self.place}, {self.start_time} to {self.end_time}"
 
     def pretty(self):
-        return f"{self.person}: {self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')}"
+        return f"{self.person}: {timezone.make_aware(self.start_time.strftime('%H:%M'))} - {timezone.make_aware(self.end_time.strftime('%H:%M'))}"
 
     def is_fresh(self):
         if self.end_time:
