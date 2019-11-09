@@ -33,9 +33,9 @@ class MessengerUser:
 
                 checkins = CheckIn.objects.filter(place = place)
                 freshCheckInStrs = [checkin.pretty() for checkin in checkins if checkin.is_fresh()]
+                print(len(freshCheckInStrs))
                 futureCheckInStrs = [checkin.pretty() for checkin in checkins if checkin.is_future_fresh()]
-
-                print(len(freshCheckInStrs), len(futureCheckInStrs))
+                print(len(futureCheckInStrs))
 
                 if len(freshCheckInStrs) > 0:
                     self.send(f"Here's who's in {place.name}:")
