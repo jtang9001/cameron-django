@@ -145,9 +145,11 @@ def messenger(request):
                             defaults = {"facebook_id": userID}
                         )
 
-                    message = message['message']['text']
+                    msg = message['message']['text']
                     nlp = message['message']['nlp']
-                    handleMessage(user, message, nlp)
+                    print(nlp)
+
+                    handleMessage(user, msg, nlp)
             return HttpResponse("Webhook OK", status=200)
         except Exception:
             traceback.print_exc()
