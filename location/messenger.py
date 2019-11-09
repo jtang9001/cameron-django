@@ -1,6 +1,5 @@
 import requests
 import json
-import re
 
 from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
@@ -106,7 +105,7 @@ def handleMessage(user: Person, inMsg, nlp):
 
                     elif nlp["entities"]["datetime"][0]["type"] == "interval":
                         start_time = parse_datetime(nlp["entities"]["datetime"][0]["from"]["value"]) if "from" in nlp["entities"]["datetime"][0] else timezone.now()
-                        
+
                         if "to" in nlp["entities"]["datetime"][0]:
                             if nlp["entities"]["datetime"][0]["to"]["grain"] == "hour" and "from" in nlp["entities"]["datetime"][0]:
                                 end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]["value"]) - timezone.timedelta(hours=1)
@@ -125,9 +124,11 @@ def handleMessage(user: Person, inMsg, nlp):
                         newCheckIn.save()
                         user.ensureNoOverlapsWith(newCheckIn)
                     except ValidationError as e:
-                        user.send('; '.join(e.messages))
+                        user.send(e.message)
+                        break
                     except Exception as e:
                         user.send(repr(e))
+                        break
 
                 sendForPlace(user, placeQ.first())
                 break
