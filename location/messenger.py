@@ -32,6 +32,7 @@ class MessengerUser:
                 print(place)
 
                 checkins = CheckIn.objects.filter(place = place)
+                print(checkins)
                 freshCheckInStrs = [checkin.pretty() for checkin in checkins if checkin.is_fresh()]
                 print(len(freshCheckInStrs))
                 futureCheckInStrs = [checkin.pretty() for checkin in checkins if checkin.is_future_fresh()]
