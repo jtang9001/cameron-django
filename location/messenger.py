@@ -33,15 +33,18 @@ class MessengerUser:
 
                 checkins = CheckIn.objects.filter(place = place)
                 freshCheckIns = [checkin for checkin in checkins if checkin.is_fresh()]
-                print(freshCheckIns)
+                futureCheckIns = [checkin for checkin in checkins if checkin.is_future_fresh()]
 
                 if len(freshCheckIns) > 0:
                     self.send(f"Here's who's in {place.name}:")
                     self.send("\n".join(checkin.pretty() for checkin in freshCheckIns))
-                    self.send("That's it!")
 
-                elif len(freshCheckIns) == 0:
-                    self.send(f"Nobody's checked into {place.name}. Would you like to?")
+                if len(futureCheckIns) > 0:
+                    self.send(f"Here's who will be in {place.name}:")
+                    self.send("\n".join(checkin.pretty() for checkin in futureCheckIns))
+
+                elif len(freshCheckIns) == 0 and len(futureCheckIns) == 0:
+                    self.send(f"Nobody's checked into {place.name}.")
                     self.state = "checking_in"
 
         else:
