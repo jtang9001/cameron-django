@@ -23,15 +23,14 @@ DIALOG = {
     ],
     "unsure_person": [
         "Who's that now?",
-        "Not sure who that is",
+        "Not sure who that is :(",
         "Never heard of them.",
-        "I don't know who that is"
+        "I don't know who that is :("
     ],
     "incomprehension": [
         "Not sure what you mean :(",
         "What's that now?",
-        "I don't understand",
-        "Ich verstehe nicht!",
+        "I don't understand :(",
         "Kindly try rephrasing?"
     ]
 }
@@ -106,7 +105,7 @@ def handleMessage(user: Person, inMsg, nlp):
 
         if "every" in msg:
             for place in Place.objects.all():
-                if len(place.checkin_set.all()) > 0:
+                if place.hasRelevantCheckIns():
                     sendForPlace(user, place)
 
         elif person is None:
@@ -116,11 +115,17 @@ def handleMessage(user: Person, inMsg, nlp):
             sendForPerson(user, person)
 
     elif len(msg.split()) < 20:
+        refdPlaces = []
+        refdPeople = []
+
         for word in msg.split():
             placeQ = Place.objects.filter(name__istartswith = word)
             personQ = Person.objects.filter(name__istartswith = word)
 
             if placeQ.exists():
+                referencedPlaces.
+
+                #####
 
                 if "datetime" in nlp["entities"]:
 

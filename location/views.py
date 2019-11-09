@@ -79,9 +79,7 @@ def index(request):
 
 def scratchCheckIn(request, checkInPK):
     checkin = get_object_or_404(CheckIn, pk = checkInPK)
-    checkin.end_time = timezone.now()
-    checkin.scratched = True
-    checkin.save()
+    checkin.scratch()
     print(checkin)
     return HttpResponseRedirect("/")
 

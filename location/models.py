@@ -22,15 +22,7 @@ class Person(models.Model):
             if checkIn == newCheckIn:
                 continue
             if checkIn.overlaps(newCheckIn):
-                checkIn.end_time = timezone.now()
-                try:
-                    checkIn.clean()
-                except ValidationError as e:
-                    print(e)
-                    print(checkIn)
-                    checkIn.delete()
-                checkIn.scratched = True
-                checkIn.save()
+                checkIn.scratch()
 
     def send(self, outMsg, msgType = "RESPONSE"):
         print("OUT:", outMsg)
@@ -122,6 +114,21 @@ class CheckIn(models.Model):
         localStart = timezone.localtime(self.start_time)
         localEnd = timezone.localtime(self.end_time)
         return f"{self.place}: {localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
+
+    def scratch(self):
+        self.scratched = True
+        self.end_time = timezone.now()
+        try:
+            self.clean()
+            self.save()
+        except ValidationError as e:
+            print(f"Deleting a checkin with validation error: {self}")
+            print(e.message)
+            self.delete()
+        except Exception as e:
+            print(f"Deleting a checkin with general error: {self}")
+            print(e)
+            self.delete()
 
     def is_fresh(self):
         if self.end_time: #should always be in this branch since end_time is now mandatory.
