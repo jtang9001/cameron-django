@@ -7,8 +7,8 @@ from .tokens import FB_ACCESS_TOKEN
 
 LOCATION_LOOKUP = ["whos in", "who is in"]
 PERSON_LOOKUP = ["wheres", "where is"]
-#CHECK_IN = [re.compile(r"(i will be|ill be|im|i am) (in|at) ([a-z]+)")]
-CHECK_IN = ["i will be", "ill be", "im", "i am", "in ", "at ", "until ", "till ", "til "]
+#CHECK_IN = [re.compile(r"(i will be |ill be |im |i am )?(in |at )?(?P<place>[a-z]+)")]
+#CHECK_IN = ["i will be", "ill be", "im", "i am", "in ", "at ", "until ", "till ", "til "]
 
 def cleanMsg(msg):
     return ''.join(char.lower() for char in msg if char.isalnum() or char in " ")
@@ -30,6 +30,37 @@ def removeSubstrings(string: str, arrOfSubstrings):
         string = string.replace(substr, "")
     return string.strip()
 
+def sendForPlace(user, place):
+    print(place)
+
+    checkins = CheckIn.objects.filter(place = place)
+    freshCheckIns = [checkin for checkin in checkins if checkin.is_fresh()]
+    futureCheckIns = [checkin for checkin in checkins if checkin.is_future_fresh()]
+
+    if len(freshCheckIns) > 0:
+        user.send(f"Here's who's in {place.name}:")
+        user.send("\n".join(checkin.prettyNoPlace() for checkin in freshCheckIns))
+
+    if len(futureCheckIns) > 0:
+        user.send(f"Here's who will be in {place.name}:")
+        user.send("\n".join(checkin.prettyNoPlace() for checkin in futureCheckIns))
+
+    elif len(freshCheckIns) == 0 and len(futureCheckIns) == 0:
+        user.send(f"Nobody's checked into {place.name}.")
+        user.state = "checking_in"
+
+def sendForPerson(user, person):
+    checkins = person.checkin_set.all()
+    checkinStrs = [checkin.prettyNoName() for checkin in checkins
+                    if checkin.is_fresh() or checkin.is_future_fresh()]
+
+    if len(checkinStrs) > 0:
+        user.send(f"Here's where {person.name} has checked in:")
+        user.send("\n".join(checkinStrs))
+
+    else:
+        user.send(f"{person.name} isn't checked in anywhere :(")
+
 def handleMessage(user: Person, inMsg):
     msg = cleanMsg(inMsg)
     print("IN:", msg)
@@ -42,23 +73,7 @@ def handleMessage(user: Person, inMsg):
             user.send("I don't know where you mean :(")
 
         else:
-            print(place)
-
-            checkins = CheckIn.objects.filter(place = place)
-            freshCheckIns = [checkin for checkin in checkins if checkin.is_fresh()]
-            futureCheckIns = [checkin for checkin in checkins if checkin.is_future_fresh()]
-
-            if len(freshCheckIns) > 0:
-                user.send(f"Here's who's in {place.name}:")
-                user.send("\n".join(checkin.prettyNoPlace() for checkin in freshCheckIns))
-
-            if len(futureCheckIns) > 0:
-                user.send(f"Here's who will be in {place.name}:")
-                user.send("\n".join(checkin.prettyNoPlace() for checkin in futureCheckIns))
-
-            elif len(freshCheckIns) == 0 and len(futureCheckIns) == 0:
-                user.send(f"Nobody's checked into {place.name}.")
-                user.state = "checking_in"
+            sendForPlace(user, place)
 
     elif isSubstringFor(msg, PERSON_LOOKUP):
         name = removeSubstrings(msg, PERSON_LOOKUP)
@@ -68,19 +83,16 @@ def handleMessage(user: Person, inMsg):
             user.send("I don't know who that is :(")
 
         else:
-            checkins = person.checkin_set.all()
-            checkinStrs = [checkin.prettyNoName() for checkin in checkins
-                            if checkin.is_fresh() or checkin.is_future_fresh()]
+            sendForPerson(user, person)
 
-            if len(checkinStrs) > 0:
-                user.send(f"Here's where {person.name} has checked in:")
-                user.send("\n".join(checkinStrs))
-
-            else:
-                user.send(f"{person.name} isn't checked in anywhere :(")
-
-    elif isSubstringFor(msg, CHECK_IN):
-        user.send("You're trying to check in :)")
+    elif len(msg.split() < 20):
+        for word in msg.split():
+            placeQ = Place.objects.filter(name__icontains = word)
+            personQ = Person.objects.filter(name__icontains = word)
+            if placeQ.exists():
+                sendForPlace(user, placeQ.first())
+            elif personQ.exists():
+                sendForPlace(user, personQ.first())
 
     else:
         user.send(f"You said, '{inMsg}'. I don't understand, sorry!")
