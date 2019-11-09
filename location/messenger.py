@@ -107,7 +107,7 @@ def handleMessage(user: Person, inMsg, nlp):
                         start_time = parse_datetime(nlp["entities"]["datetime"][0]["from"]["value"]) if "from" in nlp["entities"]["datetime"][0] else timezone.now()
                         
                         if "to" in nlp["entities"]["datetime"][0]:
-                            if nlp["entities"]["datetime"][0]["to"]["grain"] == "hour":
+                            if nlp["entities"]["datetime"][0]["to"]["grain"] == "hour" and "from" in nlp["entities"]["datetime"][0]:
                                 end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]["value"]) - timezone.timedelta(hours=1)
                             else:
                                 end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]["value"])
