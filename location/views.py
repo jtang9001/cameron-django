@@ -43,6 +43,7 @@ def render_for_get(request, form):
 
 def index(request):
     if request.method == "POST":
+        print(request.POST)
         form = CheckInForm(request.POST)
         if form.is_valid():
             user, userCreated = Person.objects.get_or_create(name=form.cleaned_data["name"])
