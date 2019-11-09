@@ -1,10 +1,8 @@
-import datetime
 import json
 import requests
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from datetime import date
 from .utils import two_hrs_later, is_later_than_now
 from .tokens import FB_ACCESS_TOKEN
 
@@ -16,13 +14,23 @@ class Person(models.Model):
     last_state_change = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     def hasFreshCheckIns(self):
-        return any(checkin.is_fresh() for checkin in self.checkin_set.all())
-    
+        for checkin in self.checkin_set.all():
+            if checkin.is_fresh():
+                return True
+        return False
+
     def hasFutureCheckIns(self):
-        return any(checkin.is_future_fresh() for checkin in self.checkin_set.all())
+        for checkin in self.checkin_set.all():
+            if checkin.is_future_fresh():
+                return True
+        return False
 
     def hasRelevantCheckIns(self):
-        return self.hasFreshCheckIns() or self.hasFutureCheckIns()
+        for checkin in self.checkin_set.all():
+            print(checkin)
+            if checkin.is_fresh() or checkin.is_future_fresh():
+                return True
+        return False
 
     def ensureNoOverlapsWith(self, newCheckIn):
         for checkIn in self.checkin_set.all():
@@ -91,13 +99,23 @@ class Place(models.Model):
         return self.name
 
     def hasFreshCheckIns(self):
-        return any(checkin.is_fresh() for checkin in self.checkin_set.all())
-    
+        for checkin in self.checkin_set.all():
+            if checkin.is_fresh():
+                return True
+        return False
+
     def hasFutureCheckIns(self):
-        return any(checkin.is_future_fresh() for checkin in self.checkin_set.all())
+        for checkin in self.checkin_set.all():
+            if checkin.is_future_fresh():
+                return True
+        return False
 
     def hasRelevantCheckIns(self):
-        return self.hasFreshCheckIns() or self.hasFutureCheckIns()
+        for checkin in self.checkin_set.all():
+            print(checkin)
+            if checkin.is_fresh() or checkin.is_future_fresh():
+                return True
+        return False
 
     class Meta:
         ordering = ['name']
@@ -125,11 +143,13 @@ class CheckIn(models.Model):
         return f"{self.place}: {localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
 
     def scratch(self):
+        print(f"scratching {self}")
         self.scratched = True
         self.end_time = timezone.now()
         try:
             self.clean()
             self.save()
+            print("successfully scratched")
         except ValidationError as e:
             print(f"Deleting a checkin with validation error: {self}")
             print(e.message)
@@ -141,12 +161,13 @@ class CheckIn(models.Model):
 
     def is_fresh(self):
         if self.end_time: #should always be in this branch since end_time is now mandatory.
-            return self.start_time <= timezone.now() <= self.end_time
+            return self.start_time <= timezone.now() <= self.end_time and not self.scratched
         else:
             return timezone.now() - timezone.timedelta(hours=2) <= self.start_time <= timezone.now()
 
     def is_future_fresh(self):
-        return timezone.now() <= self.start_time <= timezone.now() + timezone.timedelta(hours=8) and self.start_time < self.end_time
+        return (timezone.now() <= self.start_time <= timezone.now() + timezone.timedelta(hours=12)
+                and self.start_time < self.end_time and not self.scratched)
 
     def overlaps(self, other) -> bool:
         return self.start_time < other.end_time and self.end_time > other.start_time
@@ -155,7 +176,7 @@ class CheckIn(models.Model):
         is_later_than_now(self.start_time)
         if self.start_time >= self.end_time:
             raise ValidationError("End time must be strictly later than start time")
-        if self.end_time - self.start_time > timezone.timedelta(hours=12):    
+        if self.end_time - self.start_time > timezone.timedelta(hours=12):
             raise ValidationError("Check in duration is too long")
         if self.start_time - timezone.now() > timezone.timedelta(hours=18):
             raise ValidationError("Start date is too far in the future")

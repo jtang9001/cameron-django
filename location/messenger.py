@@ -5,23 +5,21 @@ import random
 from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
 
-from django.utils.dateparse import parse_datetime
-from django.utils import timezone
 from django.core.exceptions import ValidationError
-from .utils import two_hrs_later, nlpParseTime
+from .utils import nlpParseTime
 
 LOCATION_LOOKUP = ["whos in", "who is in", "who in", "who"]
 PERSON_LOOKUP = ["wheres", "where is", "where"]
 SHORT_WORD_EXCEPTIONS = ["ed"]
 CHECK_OUT = ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing"]
-FIRST_PERSON = ["i", "me", "im"]
+FIRST_PERSON = ["i", "me", "im", "imma"]
 #CHECK_IN = [re.compile(r"(i will be |ill be |im |i am )?(in |at )?(?P<place>[a-z]+)")]
 #CHECK_IN = ["i will be", "ill be", "im", "i am", "in ", "at ", "until ", "till ", "til "]
 
 DIALOG = {
     "unsure_place": [
-        "I don't know where that is :(", 
-        "Not sure where that is :(", 
+        "I don't know where that is :(",
+        "Not sure where that is :(",
         "I don't know where you mean :("
     ],
     "unsure_person": [
@@ -96,6 +94,7 @@ def handleMessage(user: Person, inMsg, nlp):
     print(f"{user.name} IN:", msg)
 
     if isSubstringFor(msg, LOCATION_LOOKUP):
+        print("in location lookup")
         location = removeSubstrings(msg, LOCATION_LOOKUP)
         place = Place.objects.filter(name__istartswith = location).first()
 
@@ -106,13 +105,22 @@ def handleMessage(user: Person, inMsg, nlp):
             sendForPlace(user, place)
 
     elif isSubstringFor(msg, PERSON_LOOKUP):
+        print("in person lookup")
         name = removeSubstrings(msg, PERSON_LOOKUP)
         person = Person.objects.filter(name__istartswith = name).first()
 
         if "every" in msg:
+            print("looking up everyone")
+            user.send("Here's all the information I have:")
+            sentReply = False
             for place in Place.objects.all():
+                print(f"looking up in {place}")
                 if place.hasRelevantCheckIns():
+                    print(f"found checkins in {place}")
                     sendForPlace(user, place)
+                    sentReply = True
+            if not sentReply:
+                user.send("Nobody's checked in anywhere :(")
 
         elif person is None:
             user.send(random.choice(DIALOG["unsure_person"]))
@@ -121,6 +129,7 @@ def handleMessage(user: Person, inMsg, nlp):
             sendForPerson(user, person)
 
     elif len(msg.split()) < 30:
+        print("in general keyword search")
         refdPlaces = set()
         refdPeople = set()
         checkOut = False
@@ -130,6 +139,7 @@ def handleMessage(user: Person, inMsg, nlp):
             #     continue
 
             if word in CHECK_OUT:
+                print("checkout word detected")
                 checkOut = True
                 continue
 
@@ -141,42 +151,56 @@ def handleMessage(user: Person, inMsg, nlp):
 
             if placeQ.exists():
                 refdPlaces.add(placeQ.first())
-                
+
             elif personQ.exists():
                 refdPeople.add(personQ.first())
 
 
         if len(refdPlaces) > 1:
+
             user.send(f"Too many places ({', '.join(refdPlaces)}) were referenced in your message.")
             return
 
         elif len(refdPlaces) == 0:
-            if len(refdPeople) == 0:
-                if checkOut:
-                    checkIns = CheckIn.objects.filter(person = user)
-                    for checkin in checkIns:
-                        if checkin.is_fresh():
-                            user.send(f"Checking you out of {checkin.place}.")
-                            sendForPerson(user, user)
-                            checkin.scratch()
-                else:
-                    sendIncomprehension(user, inMsg)
-            else:
+            print("no places referenced")
+            if checkOut:
+                sentMsg = False
+                if len(refdPeople) == 0:
+                    refdPeople.add(user)
+
                 for person in refdPeople:
+                    checkIns = CheckIn.objects.filter(person = person)
+                    for checkin in checkIns:
+                        print(checkin)
+                        if checkin.is_fresh():
+                            user.send(f"Checking {person} out of {checkin.place}.")
+                            checkin.scratch()
+                            sentMsg = True
+
                     sendForPerson(user, person)
 
+                if not sentMsg:
+                    user.send("To delete someone's planned check in, specify the place they're no longer going to.")
+            elif len(refdPeople) != 0:
+                for person in refdPeople:
+                    sendForPerson(user, person)
+            else:
+                sendIncomprehension(user, inMsg)
+
         elif len(refdPlaces) == 1:
+            print("exactly one place referenced")
             place = refdPlaces.pop()
 
             if len(refdPeople) == 0:
                 refdPeople.add(user)
 
             if checkOut:
+                print("checking out")
                 for person in refdPeople:
                     checkIns = CheckIn.objects.filter(person = person, place = place)
                     for checkin in checkIns:
-                        if person == user and checkin.is_future_fresh():
-                            user.send(f"Deleting your future check in at {checkin.prettyNoName()}.")
+                        if checkin.is_future_fresh():
+                            user.send(f"Deleting {person}'s future check in at {checkin.prettyNoName()}.")
                             checkin.scratch()
                         elif checkin.is_fresh():
                             user.send(f"Checking {person} out of {place}.")
@@ -184,8 +208,9 @@ def handleMessage(user: Person, inMsg, nlp):
 
             else:
                 if "datetime" in nlp["entities"]:
+                    print("dt detected. checking in")
                     start_time, end_time = nlpParseTime(nlp["entities"]["datetime"][0])
-            
+
                     for person in refdPeople:
                         try:
                             newCheckIn = CheckIn(
@@ -202,10 +227,12 @@ def handleMessage(user: Person, inMsg, nlp):
                         except ValidationError as e:
                             user.send(e.message)
                             break
-                        
+
                         except Exception as e:
                             user.send(repr(e))
                             break
+                else:
+                    user.send(f"If you want to check in, make sure to specify a time (ex. '{place} in 5 mins' or '{place} till 2') :)")
 
                 sendForPlace(user, place)
 
