@@ -14,7 +14,14 @@ class Person(models.Model):
     state = models.CharField(max_length=25, null=True, blank=True)
     last_state_change = models.DateTimeField(auto_now=True, null=True, blank=True)
 
-
+    def ensureNoOverlapsWith(self, newCheckIn):
+        for checkIn in self.checkin_set.all():
+            if checkIn == newCheckIn:
+                continue
+            if checkIn.overlaps(newCheckIn):
+                checkIn.end_time = timezone.now()
+                checkIn.scratched = True
+                checkIn.save()
 
     def send(self, outMsg, msgType = "RESPONSE"):
         print("OUT:", outMsg)

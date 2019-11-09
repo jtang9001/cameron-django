@@ -106,6 +106,7 @@ def handleMessage(user: Person, inMsg, nlp):
                             end_time = two_hrs_later(parse_datetime(nlp["entities"]["datetime"][0]["value"]))
                         )
                         newCheckIn.save()
+                        user.ensureNoOverlapsWith(newCheckIn)
                     elif nlp["entities"]["datetime"][0]["type"] == "interval":
                         start_time = parse_datetime(nlp["entities"]["datetime"][0]["from"]["value"]) if "from" in nlp["entities"]["datetime"][0] else timezone.now()
                         newCheckIn = CheckIn(
@@ -115,6 +116,7 @@ def handleMessage(user: Person, inMsg, nlp):
                             end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]["value"]) if "to" in nlp["entities"]["datetime"][0] else two_hrs_later(start_time)
                         )
                         newCheckIn.save()
+                        user.ensureNoOverlapsWith(newCheckIn)
 
 
                 sendForPlace(user, placeQ.first())
