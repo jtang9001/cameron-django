@@ -12,6 +12,9 @@ from .utils import two_hrs_later, nlpParseTime
 
 LOCATION_LOOKUP = ["whos in", "who is in", "who in", "who"]
 PERSON_LOOKUP = ["wheres", "where is", "where"]
+SHORT_WORD_EXCEPTIONS = ["ed"]
+CHECK_OUT = ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing"]
+FIRST_PERSON = ["i", "me", "im"]
 #CHECK_IN = [re.compile(r"(i will be |ill be |im |i am )?(in |at )?(?P<place>[a-z]+)")]
 #CHECK_IN = ["i will be", "ill be", "im", "i am", "in ", "at ", "until ", "till ", "til "]
 
@@ -85,6 +88,9 @@ def sendForPerson(user, person):
     else:
         user.send(f"{person.name} isn't checked in anywhere :(")
 
+def sendIncomprehension(user, origMsg):
+    user.send(f"You said, '{origMsg}'. {random.choice(DIALOG['incomprehension'])}")
+
 def handleMessage(user: Person, inMsg, nlp):
     msg = cleanMsg(inMsg)
     print(f"{user.name} IN:", msg)
@@ -114,54 +120,93 @@ def handleMessage(user: Person, inMsg, nlp):
         else:
             sendForPerson(user, person)
 
-    elif len(msg.split()) < 20:
-        refdPlaces = []
-        refdPeople = []
+    if len(msg.split()) < 30:
+        refdPlaces = set()
+        refdPeople = set()
+        checkOut = False
 
         for word in msg.split():
+            # if len(word) <= 2 and word not in SHORT_WORD_EXCEPTIONS:
+            #     continue
+
+            if word in CHECK_OUT:
+                checkOut = True
+                continue
+
+            if word in FIRST_PERSON:
+                refdPeople.add(user)
+
             placeQ = Place.objects.filter(name__istartswith = word)
             personQ = Person.objects.filter(name__istartswith = word)
 
             if placeQ.exists():
-                referencedPlaces.
-
-                #####
-
-                if "datetime" in nlp["entities"]:
-
-                    start_time, end_time = nlpParseTime(nlp["entities"]["datetime"][0])
-
-                    try:
-                        newCheckIn = CheckIn(
-                            person = user,
-                            place = placeQ.first(),
-                            start_time = start_time,
-                            end_time = end_time
-                        )
-                        newCheckIn.clean()
-                        newCheckIn.save()
-                        user.ensureNoOverlapsWith(newCheckIn)
-                        user.send(f"✔️ I've checked you in for {newCheckIn.prettyNoName()}.")
-
-                    except ValidationError as e:
-                        user.send(e.message)
-                        break
-                    
-                    except Exception as e:
-                        user.send(repr(e))
-                        break
-
-                sendForPlace(user, placeQ.first())
-                break
-
+                refdPlaces.add(placeQ.first())
+                
             elif personQ.exists():
-                sendForPerson(user, personQ.first())
-                break
-        else:
-            user.send(f"You said, '{inMsg}'. {random.choice(DIALOG['incomprehension'])}")
+                refdPeople.add(personQ.first())
+
+
+        if len(refdPlaces) > 1:
+            user.send(f"Too many places ({', '.join(refdPlaces)}) were referenced in your message.")
+            return
+
+        elif len(refdPlaces) == 0:
+            if len(refdPeople) == 0:
+                if checkOut:
+                    checkIns = CheckIn.objects.filter(person = user)
+                    for checkin in checkIns:
+                        if checkin.is_fresh():
+                            checkin.scratch()
+                else:
+                    sendIncomprehension(user, inMsg)
+            else:
+                for person in refdPeople:
+                    sendForPerson(user, person)
+
+        elif len(refdPlaces) == 1:
+            place = refdPlaces.pop()
+
+            if len(refdPeople) == 0:
+                refdPeople.add(user)
+
+            if checkOut:
+                for person in refdPeople:
+                    checkIns = CheckIn.objects.filter(person = person, place = place)
+                    for checkin in checkIns:
+                        if person == user and checkin.is_future_fresh():
+                            checkin.scratch()
+                        elif checkin.is_fresh():
+                            checkin.scratch()
+
+            else:
+                if "datetime" in nlp["entities"]:
+                    start_time, end_time = nlpParseTime(nlp["entities"]["datetime"][0])
+            
+                    for person in refdPeople:
+                        try:
+                            newCheckIn = CheckIn(
+                                person = person,
+                                place = place,
+                                start_time = start_time,
+                                end_time = end_time
+                            )
+                            newCheckIn.clean()
+                            newCheckIn.save()
+                            person.ensureNoOverlapsWith(newCheckIn)
+                            user.send(f"✔️ I've checked {person} in for {newCheckIn.prettyNoName()}.")
+
+                        except ValidationError as e:
+                            user.send(e.message)
+                            break
+                        
+                        except Exception as e:
+                            user.send(repr(e))
+                            break
+
+                sendForPlace(user, place)
 
     else:
-        user.send(f"You said, '{inMsg}'. {random.choice(DIALOG['incomprehension'])}")
+        sendIncomprehension(user, inMsg)
 
 def getNameFromPSID(psid):
     endpoint = f"https://graph.facebook.com/{psid}?fields=first_name&access_token={FB_ACCESS_TOKEN}"

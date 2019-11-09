@@ -15,6 +15,15 @@ class Person(models.Model):
     state = models.CharField(max_length=25, null=True, blank=True)
     last_state_change = models.DateTimeField(auto_now=True, null=True, blank=True)
 
+    def hasFreshCheckIns(self):
+        return any(checkin.is_fresh() for checkin in self.checkin_set.all())
+    
+    def hasFutureCheckIns(self):
+        return any(checkin.is_future_fresh() for checkin in self.checkin_set.all())
+
+    def hasRelevantCheckIns(self):
+        return self.hasFreshCheckIns() or self.hasFutureCheckIns()
+
     def ensureNoOverlapsWith(self, newCheckIn):
         for checkIn in self.checkin_set.all():
             if timezone.now() - checkIn.end_time > timezone.timedelta(weeks=4):
