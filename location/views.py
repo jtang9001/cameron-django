@@ -145,7 +145,8 @@ def messenger(request):
                         )
 
                     message = message['message']['text']
-                    handleMessage(user, message)
+                    nlp = message['message']['nlp']
+                    handleMessage(user, message, nlp)
             return HttpResponse("Webhook OK", status=200)
         except Exception:
             traceback.print_exc()

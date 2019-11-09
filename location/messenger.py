@@ -61,7 +61,7 @@ def sendForPerson(user, person):
     else:
         user.send(f"{person.name} isn't checked in anywhere :(")
 
-def handleMessage(user: Person, inMsg):
+def handleMessage(user: Person, inMsg, nlp):
     msg = cleanMsg(inMsg)
     print("IN:", msg)
 
@@ -89,11 +89,17 @@ def handleMessage(user: Person, inMsg):
         for word in msg.split():
             placeQ = Place.objects.filter(name__istartswith = word)
             personQ = Person.objects.filter(name__istartswith = word)
+
             if placeQ.exists():
                 sendForPlace(user, placeQ.first())
+                break
+
             elif personQ.exists():
                 sendForPerson(user, personQ.first())
-
+                break
+        else:
+            user.send(f"You said, '{inMsg}'. I don't understand, sorry!")
+        
     else:
         user.send(f"You said, '{inMsg}'. I don't understand, sorry!")
 
