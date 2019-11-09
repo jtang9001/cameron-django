@@ -211,8 +211,11 @@ def handleMessage(user: Person, inMsg, nlp):
 
 
         if len(refdPlaces) > 1:
-
-            user.send(f"💡 Too many places ({', '.join(place.name for place in refdPlaces)}) were referenced in your message.")
+            if len(refdPeople) == 0:
+                for place in refdPlaces:
+                    sendForPlace(user, place)
+            else:
+                user.send(f"💡 Too many places ({', '.join(place.name for place in refdPlaces)}) were referenced in your message.")
             return
 
         elif len(refdPlaces) == 0:
@@ -276,7 +279,13 @@ def handleMessage(user: Person, inMsg, nlp):
                         start_time = timezone.now()
                         end_time = two_hrs_later()
                         for person in refdPeople:
-                            makeNewCheckIn(user, person, place, start_time, end_time)
+                            for checkin in CheckIn.objects.filter(person = person, place = place):
+                                if checkin.is_fresh():
+                                    user.send(f"{person} is already checked in: {checkin.prettyNoName()}.")
+                                    user.send("You can specify a new end time to extend the check in.")
+                                    break
+                            else:  
+                                makeNewCheckIn(user, person, place, start_time, end_time)
 
 
                 sendForPlace(user, place)
