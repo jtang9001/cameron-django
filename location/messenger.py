@@ -7,7 +7,7 @@ from .tokens import FB_ACCESS_TOKEN
 
 LOCATION_LOOKUP = ["whos in", "who is in"]
 PERSON_LOOKUP = ["wheres", "where is"]
-CHECK_IN = [re.compile(r"check () into")]
+CHECK_IN = [re.compile(r"(i will be|ill be|im|i am) (in|at) ([a-z]+)")]
 
 def cleanMsg(msg):
     return ''.join(char.lower() for char in msg if char.isalnum() or char in " :")
@@ -15,6 +15,12 @@ def cleanMsg(msg):
 def isSubstringFor(string: str, arrOfSubstrings):
     for substr in arrOfSubstrings:
         if substr in string:
+            return True
+    return False
+
+def reMatchesFor(string: str, patterns):
+    for pattern in patterns:
+        if pattern.search():
             return True
     return False
 
@@ -72,6 +78,8 @@ def handleMessage(user: Person, inMsg):
             else:
                 user.send(f"{person.name} isn't checked in anywhere :(")
 
+    elif reMatchesFor(msg, CHECK_IN):
+        user.send("You're trying to check in :)")
 
     else:
         user.send(f"You said, '{inMsg}'. I don't understand, sorry!")

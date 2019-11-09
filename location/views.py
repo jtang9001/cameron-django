@@ -127,7 +127,7 @@ def messenger(request):
     
     elif request.method == "POST":
         incoming_message = json.loads(request.body.decode('utf-8'))
-        print(incoming_message)
+        print("WEBHOOK RECEIVED:", json.dumps(incoming_message, sort_keys = True, indent = 4))
         try:
             for entry in incoming_message['entry']:
                 for message in entry['messaging']:
