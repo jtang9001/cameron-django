@@ -7,6 +7,7 @@ from .tokens import FB_ACCESS_TOKEN
 
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 from .utils import two_hrs_later
 
 LOCATION_LOOKUP = ["whos in", "who is in"]
@@ -123,6 +124,8 @@ def handleMessage(user: Person, inMsg, nlp):
                         newCheckIn.clean()
                         newCheckIn.save()
                         user.ensureNoOverlapsWith(newCheckIn)
+                    except ValidationError as e:
+                        user.send('; '.join(e.messages))
                     except Exception as e:
                         user.send(repr(e))
 
