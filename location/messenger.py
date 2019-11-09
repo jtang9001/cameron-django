@@ -58,6 +58,7 @@ class MessengerUser:
             self.send(f"You said, '{inMsg}'. I don't understand, sorry!")
 
     def send(self, outMsg, msgType = "RESPONSE"):
+        print(outMsg)
         endpoint = f"https://graph.facebook.com/v5.0/me/messages?access_token={FB_ACCESS_TOKEN}"
         response_msg = json.dumps(
             {
