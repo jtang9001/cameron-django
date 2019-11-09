@@ -57,10 +57,15 @@ class CheckIn(models.Model):
     def __str__(self):
         return f"{self.person} at {self.place}, {self.start_time} to {self.end_time}"
 
-    def pretty(self):
+    def prettyNoPlace(self):
         localStart = timezone.localtime(self.start_time)
         localEnd = timezone.localtime(self.end_time)
         return f"{self.person}: {localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
+
+    def prettyNoName(self):
+        localStart = timezone.localtime(self.start_time)
+        localEnd = timezone.localtime(self.end_time)
+        return f"{self.place}: {localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
 
     def is_fresh(self):
         if self.end_time: #should always be in this branch since end_time is now mandatory.

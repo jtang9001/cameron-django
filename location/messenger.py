@@ -1,7 +1,7 @@
 import requests
 import json
 
-from .models import Place, CheckIn
+from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
 
 
@@ -17,18 +17,14 @@ class MessengerUser:
         msg = cleanMsg(inMsg)
         print("IN:", msg)
 
-        if "whos in" in msg:
-            print("in who's in branch")
+        if "whos in" in msg or "who is in" in msg:
             location = " ".join(msg.split()[2:])
-            matchingPlaces = Place.objects.filter(name__icontains = location)
+            place = Place.objects.filter(name__icontains = location).first()
 
-            if len(matchingPlaces) == 0:
+            if matchingPlaces is None:
                 self.send("I don't know where you mean :(")
 
-            elif len(matchingPlaces) > 1:
-                self.send("More than one matching place was found!")
-
-            for place in matchingPlaces:
+            else:
                 print(place)
 
                 checkins = CheckIn.objects.filter(place = place)
@@ -37,15 +33,35 @@ class MessengerUser:
 
                 if len(freshCheckIns) > 0:
                     self.send(f"Here's who's in {place.name}:")
-                    self.send("\n".join(checkin.pretty() for checkin in freshCheckIns))
+                    self.send("\n".join(checkin.prettyNoPlace() for checkin in freshCheckIns))
 
                 if len(futureCheckIns) > 0:
                     self.send(f"Here's who will be in {place.name}:")
-                    self.send("\n".join(checkin.pretty() for checkin in futureCheckIns))
+                    self.send("\n".join(checkin.prettyNoPlace() for checkin in futureCheckIns))
 
                 elif len(freshCheckIns) == 0 and len(futureCheckIns) == 0:
                     self.send(f"Nobody's checked into {place.name}.")
                     self.state = "checking_in"
+
+        elif "wheres" in msg or "where is" in msg:
+            name = " ".join(msg.split()[2:])
+            person = Person.objects.filter(name__iexact = name).first()
+
+            if person is None:
+                self.send("I don't know who that is :(")
+
+            else:
+                checkins = person.checkin_set.all()
+                checkinStrs = [checkin.prettyNoName() for checkin in checkins 
+                               if checkin.is_fresh() or checkin.is_future_fresh()]
+
+                if len(checkinStrs) > 0:
+                    self.send(f"Here's where {person.name} has checked in:")
+                    self.send("\n".join(checkinStrs))
+
+                else:
+                    self.send(f"{person.name} isn't checked in anywhere :(")
+
 
         else:
             self.send(f"You said, '{inMsg}'. I don't understand, sorry!")

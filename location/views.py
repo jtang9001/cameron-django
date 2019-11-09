@@ -1,4 +1,5 @@
 import json
+import traceback
 
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
@@ -132,9 +133,10 @@ def messenger(request):
                 for message in entry['messaging']:
                     userID = message['sender']['id']
                     user = MessengerUser(userID)
-                    
+
                     message = message['message']['text']
                     user.handleMessage(message)
             return HttpResponse("Webhook OK", status=200)
         except Exception:
+            traceback.print_exc()
             return HttpResponse("Webhook POST error", status=200)
