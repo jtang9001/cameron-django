@@ -5,7 +5,7 @@ from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from datetime import date
-from .utils import two_hrs_later
+from .utils import two_hrs_later, is_later_than_now
 from .tokens import FB_ACCESS_TOKEN
 
 
@@ -17,6 +17,8 @@ class Person(models.Model):
 
     def ensureNoOverlapsWith(self, newCheckIn):
         for checkIn in self.checkin_set.all():
+            if timezone.now() - checkIn.end_time > timezone.timedelta(weeks=4):
+                checkIn.delete()
             if checkIn == newCheckIn:
                 continue
             if checkIn.overlaps(newCheckIn):
@@ -123,5 +125,10 @@ class CheckIn(models.Model):
         return self.start_time < other.end_time and self.end_time > other.start_time
 
     def clean(self):
+        is_later_than_now(self.start_time)
         if self.start_time >= self.end_time:
             raise ValidationError("End time must be strictly later than start time")
+        if self.end_time - self.start_time > timezone.timedelta(hours=12):    
+            raise ValidationError("Check in duration is too long")
+        if self.start_time - timezone.now() > timezone.timedelta(hours=18):
+            raise ValidationError("Start date is too far in the future")
