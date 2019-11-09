@@ -86,7 +86,7 @@ def sendForPerson(user, person):
         user.send("\n".join(checkinStrs))
 
     else:
-        user.send(f"{person.name} isn't checked in anywhere 😓")
+        user.send(f"{person.name} isn't checked in anywhere")
 
 def sendIncomprehension(user, origMsg):
     user.send(f"You said, '{origMsg}'. {random.choice(DIALOG['incomprehension'])}")
@@ -100,7 +100,7 @@ def sendLeaderboard(user):
 
     for i in range(len(medals)):
         peopleStrs[i] = medals[i] + peopleStrs[i]
-    
+
     user.send("\n".join(peopleStrs))
 
 def handleMessage(user: Person, inMsg, nlp):
@@ -138,7 +138,7 @@ def handleMessage(user: Person, inMsg, nlp):
                     sentReply = True
             if not sentReply:
                 user.send("Nobody's checked in anywhere 🥺")
-        
+
         elif person is None:
             user.send(random.choice(DIALOG["unsure_person"]))
 
