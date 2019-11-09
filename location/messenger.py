@@ -5,6 +5,8 @@ import re
 from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
 
+from django.utils.dateparse import parse_datetime
+
 LOCATION_LOOKUP = ["whos in", "who is in"]
 PERSON_LOOKUP = ["wheres", "where is"]
 #CHECK_IN = [re.compile(r"(i will be |ill be |im |i am )?(in |at )?(?P<place>[a-z]+)")]
@@ -62,6 +64,7 @@ def sendForPerson(user, person):
         user.send(f"{person.name} isn't checked in anywhere :(")
 
 def handleMessage(user: Person, inMsg, nlp):
+    print(user.name)
     msg = cleanMsg(inMsg)
     print("IN:", msg)
 
@@ -92,6 +95,23 @@ def handleMessage(user: Person, inMsg, nlp):
 
             if placeQ.exists():
                 sendForPlace(user, placeQ.first())
+
+                if "datetime" in nlp["entities"]:
+                    if nlp["entities"]["datetime"][0]["type"] == "value":
+                        newCheckIn = CheckIn(
+                            person = user,
+                            place = placeQ.first(),
+                            start_time = parse_datetime(nlp["entities"]["datetime"][0]["value"])
+                        )
+                        newCheckIn.save()
+                    elif nlp["entities"]["datetime"][0]["type"] == "interval":
+                        newCheckIn = CheckIn(
+                            person = user,
+                            place = placeQ.first(),
+                            start_time = parse_datetime(nlp["entities"]["datetime"][0]["from"]) if "from" in nlp["entities"]["datetime"][0] else None
+                            end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]) if "to" in nlp["entities"]["datetime"][0] else None
+                        )
+                        newCheckIn.save()
                 break
 
             elif personQ.exists():
