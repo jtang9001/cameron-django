@@ -35,7 +35,16 @@ DIALOG = {
         "What's that now? 😅",
         "I don't understand 😓",
         "Kindly try rephrasing? 🤔"
+    ],
+    "greeting": ["Hey", "Hello!", "Yoohoo!", "Yo", "Sup", "👋"],
+    "bye": ["See ya!", "Bye!", "I literally cannot leave", "👋"],
+    "thanks": [
+        "No problem!", 
+        "No, thank you 🙄", 
+        "Good to see the youth of today have some manners!",
+        "You're welcome!"
     ]
+
 }
 
 def cleanMsg(msg):
@@ -147,6 +156,13 @@ def handleMessage(user: Person, inMsg, nlp):
 
     elif isSubstringFor(msg, LEADERBOARD):
         sendLeaderboard(user)
+
+    elif "greetings" in nlp["entities"]:
+        user.send(random.choice(DIALOG["greetings"]))
+    elif "bye" in nlp["entities"]:
+        user.send(random.choice(DIALOG["bye"]))
+    elif "thanks" in nlp["entities"]:
+        user.send(random.choice(DIALOG["thanks"]))
 
     elif len(msg.split()) < 30:
         print("in general keyword search")
