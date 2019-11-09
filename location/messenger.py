@@ -124,7 +124,7 @@ def handleMessage(user: Person, inMsg, nlp):
                         newCheckIn.save()
                         user.ensureNoOverlapsWith(newCheckIn)
                     except Exception as e:
-                        user.send(e)
+                        user.send(repr(e))
 
                 sendForPlace(user, placeQ.first())
                 break
