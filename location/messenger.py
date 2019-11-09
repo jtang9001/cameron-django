@@ -12,7 +12,7 @@ from .utils import nlpParseTime
 LOCATION_LOOKUP = ["whos in", "who is in", "who in", "who"]
 PERSON_LOOKUP = ["wheres", "where is", "where"]
 SHORT_WORD_EXCEPTIONS = ["ed"]
-CHECK_OUT = ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing"]
+CHECK_OUT = ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing", "left"]
 FIRST_PERSON = ["i", "me", "im", "imma"]
 LEADERBOARD = ["leaderboard", "leader board", "score"]
 #CHECK_IN = [re.compile(r"(i will be |ill be |im |i am )?(in |at )?(?P<place>[a-z]+)")]
