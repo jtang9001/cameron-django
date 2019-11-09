@@ -96,7 +96,6 @@ def handleMessage(user: Person, inMsg, nlp):
             personQ = Person.objects.filter(name__istartswith = word)
 
             if placeQ.exists():
-                sendForPlace(user, placeQ.first())
 
                 if "datetime" in nlp["entities"]:
                     if nlp["entities"]["datetime"][0]["type"] == "value":
@@ -108,14 +107,17 @@ def handleMessage(user: Person, inMsg, nlp):
                         )
                         newCheckIn.save()
                     elif nlp["entities"]["datetime"][0]["type"] == "interval":
-                        start_time = parse_datetime(nlp["entities"]["datetime"][0]["from"]) if "from" in nlp["entities"]["datetime"][0] else timezone.now()
+                        start_time = parse_datetime(nlp["entities"]["datetime"][0]["from"]["value"]) if "from" in nlp["entities"]["datetime"][0] else timezone.now()
                         newCheckIn = CheckIn(
                             person = user,
                             place = placeQ.first(),
-                            start_time = start_time
-                            end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]) if "to" in nlp["entities"]["datetime"][0] else two_hrs_later(start_time)
+                            start_time = start_time,
+                            end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]["value"]) if "to" in nlp["entities"]["datetime"][0] else two_hrs_later(start_time)
                         )
                         newCheckIn.save()
+
+
+                sendForPlace(user, placeQ.first())
                 break
 
             elif personQ.exists():
@@ -123,7 +125,7 @@ def handleMessage(user: Person, inMsg, nlp):
                 break
         else:
             user.send(f"You said, '{inMsg}'. I don't understand, sorry!")
-        
+
     else:
         user.send(f"You said, '{inMsg}'. I don't understand, sorry!")
 
