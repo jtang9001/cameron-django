@@ -6,7 +6,8 @@ from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
 
 from django.core.exceptions import ValidationError
-from .utils import nlpParseTime
+from .utils import nlpParseTime, two_hrs_later
+from django.utils import timezone
 
 LOCATION_LOOKUP = ["whos in", "who is in", "who in", "who"]
 PERSON_LOOKUP = ["wheres", "where is", "where am", "where"]
@@ -111,6 +112,25 @@ def sendLeaderboard(user):
 
     user.send("\n".join(peopleStrs))
 
+def makeNewCheckIn(user, person, place, start_time, end_time):
+    try:
+        newCheckIn = CheckIn(
+            person = person,
+            place = place,
+            start_time = start_time,
+            end_time = end_time
+        )
+        newCheckIn.clean()
+        newCheckIn.save()
+        person.ensureNoOverlapsWith(newCheckIn)
+        user.send(f"✔️ I've checked {person} in for {newCheckIn.prettyNoName()}.")
+
+    except ValidationError as e:
+        user.send(e.message)
+
+    except Exception as e:
+        user.send(repr(e))
+
 def handleMessage(user: Person, inMsg, nlp):
     msg = cleanMsg(inMsg)
     print(f"{user.name} IN:", msg)
@@ -165,6 +185,7 @@ def handleMessage(user: Person, inMsg, nlp):
         refdPlaces = set()
         refdPeople = set()
         checkOut = False
+        firstPersonGiven = False
 
         for word in msg.split():
             # if len(word) <= 2 and word not in SHORT_WORD_EXCEPTIONS:
@@ -177,6 +198,7 @@ def handleMessage(user: Person, inMsg, nlp):
 
             if word in FIRST_PERSON:
                 refdPeople.add(user)
+                firstPersonGiven = True
 
             placeQ = Place.objects.filter(name__istartswith = word)
             personQ = Person.objects.filter(name__istartswith = word.strip("s"))
@@ -190,7 +212,7 @@ def handleMessage(user: Person, inMsg, nlp):
 
         if len(refdPlaces) > 1:
 
-            user.send(f"💡 Too many places ({', '.join(refdPlaces)}) were referenced in your message.")
+            user.send(f"💡 Too many places ({', '.join(place.name for place in refdPlaces)}) were referenced in your message.")
             return
 
         elif len(refdPlaces) == 0:
@@ -245,27 +267,17 @@ def handleMessage(user: Person, inMsg, nlp):
                     start_time, end_time = nlpParseTime(nlp["entities"]["datetime"][0])
 
                     for person in refdPeople:
-                        try:
-                            newCheckIn = CheckIn(
-                                person = person,
-                                place = place,
-                                start_time = start_time,
-                                end_time = end_time
-                            )
-                            newCheckIn.clean()
-                            newCheckIn.save()
-                            person.ensureNoOverlapsWith(newCheckIn)
-                            user.send(f"✔️ I've checked {person} in for {newCheckIn.prettyNoName()}.")
+                        makeNewCheckIn(user, person, place, start_time, end_time)
 
-                        except ValidationError as e:
-                            user.send(e.message)
-                            break
-
-                        except Exception as e:
-                            user.send(repr(e))
-                            break
                 else:
-                    user.send(f"💡 If you want to check in, make sure to specify a time (ex. '{place} in 5 mins' or '{place} till 2') :)")
+                    if len(refdPeople) == 1 and user in refdPeople and not firstPersonGiven:
+                        user.send(f"💡 To check in, specify at least a place and a person (ex. 'I'm in Cam') or a place and a time (ex. 'Cam till 5').")
+                    else:
+                        start_time = timezone.now()
+                        end_time = two_hrs_later()
+                        for person in refdPeople:
+                            makeNewCheckIn(user, person, place, start_time, end_time)
+
 
                 sendForPlace(user, place)
 

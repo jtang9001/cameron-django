@@ -2,7 +2,9 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-def two_hrs_later(start = timezone.now()):
+def two_hrs_later(start = None):
+    if start == None:
+        start = timezone.now()
     return start + timezone.timedelta(hours = 2)
 
 def is_later_than_now(val):
