@@ -18,21 +18,21 @@ FIRST_PERSON = ["i", "me", "im", "imma"]
 
 DIALOG = {
     "unsure_place": [
-        "I don't know where that is :(",
-        "Not sure where that is :(",
-        "I don't know where you mean :("
+        "I don't know where that is 😅",
+        "Not sure where that is 🤔",
+        "I don't know where you mean 😓"
     ],
     "unsure_person": [
-        "Who's that now?",
-        "Not sure who that is :(",
+        "Who's that now? 😅",
+        "Not sure who that is 🤔",
         "Never heard of them.",
-        "I don't know who that is :("
+        "I don't know who that is 😅"
     ],
     "incomprehension": [
-        "Not sure what you mean :(",
-        "What's that now?",
-        "I don't understand :(",
-        "Kindly try rephrasing?"
+        "Not sure what you mean 😅",
+        "What's that now? 😅",
+        "I don't understand 😓",
+        "Kindly try rephrasing? 🤔"
     ]
 }
 
@@ -84,7 +84,7 @@ def sendForPerson(user, person):
         user.send("\n".join(checkinStrs))
 
     else:
-        user.send(f"{person.name} isn't checked in anywhere :(")
+        user.send(f"{person.name} isn't checked in anywhere 😓")
 
 def sendIncomprehension(user, origMsg):
     user.send(f"You said, '{origMsg}'. {random.choice(DIALOG['incomprehension'])}")
@@ -120,7 +120,7 @@ def handleMessage(user: Person, inMsg, nlp):
                     sendForPlace(user, place)
                     sentReply = True
             if not sentReply:
-                user.send("Nobody's checked in anywhere :(")
+                user.send("Nobody's checked in anywhere 🥺")
 
         elif person is None:
             user.send(random.choice(DIALOG["unsure_person"]))
@@ -158,7 +158,7 @@ def handleMessage(user: Person, inMsg, nlp):
 
         if len(refdPlaces) > 1:
 
-            user.send(f"Too many places ({', '.join(refdPlaces)}) were referenced in your message.")
+            user.send(f"💡 Too many places ({', '.join(refdPlaces)}) were referenced in your message.")
             return
 
         elif len(refdPlaces) == 0:
@@ -173,14 +173,14 @@ def handleMessage(user: Person, inMsg, nlp):
                     for checkin in checkIns:
                         print(checkin)
                         if checkin.is_fresh():
-                            user.send(f"Checking {person} out of {checkin.place}.")
+                            user.send(f"Checking {person} out of {checkin.place} 💨")
                             checkin.scratch()
                             sentMsg = True
 
                     sendForPerson(user, person)
 
                 if not sentMsg:
-                    user.send("To delete someone's planned check in, specify the place they're no longer going to.")
+                    user.send("💡 To delete someone's planned check in, specify the place they're no longer going to.")
             elif len(refdPeople) != 0:
                 for person in refdPeople:
                     sendForPerson(user, person)
@@ -200,10 +200,10 @@ def handleMessage(user: Person, inMsg, nlp):
                     checkIns = CheckIn.objects.filter(person = person, place = place)
                     for checkin in checkIns:
                         if checkin.is_future_fresh():
-                            user.send(f"Deleting {person}'s future check in at {checkin.prettyNoName()}.")
+                            user.send(f"❌ Deleting {person}'s future check in at {checkin.prettyNoName()}.")
                             checkin.scratch()
                         elif checkin.is_fresh():
-                            user.send(f"Checking {person} out of {place}.")
+                            user.send(f"Checking {person} out of {place} 💨")
                             checkin.scratch()
 
             else:
@@ -232,7 +232,7 @@ def handleMessage(user: Person, inMsg, nlp):
                             user.send(repr(e))
                             break
                 else:
-                    user.send(f"If you want to check in, make sure to specify a time (ex. '{place} in 5 mins' or '{place} till 2') :)")
+                    user.send(f"💡 If you want to check in, make sure to specify a time (ex. '{place} in 5 mins' or '{place} till 2') :)")
 
                 sendForPlace(user, place)
 
