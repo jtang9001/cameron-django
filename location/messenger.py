@@ -36,11 +36,11 @@ DIALOG = {
         "I don't understand 😓",
         "Kindly try rephrasing? 🤔"
     ],
-    "greeting": ["Hey", "Hello!", "Yoohoo!", "Yo", "Sup", "👋"],
+    "greetings": ["Hey", "Hello!", "Yoohoo!", "Yo", "Sup", "👋"],
     "bye": ["See ya!", "Bye!", "I literally cannot leave", "👋"],
     "thanks": [
-        "No problem!", 
-        "No, thank you 🙄", 
+        "No problem!",
+        "No, thank you 🙄",
         "Good to see the youth of today have some manners!",
         "You're welcome!"
     ]
