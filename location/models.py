@@ -10,9 +10,9 @@ from .tokens import FB_ACCESS_TOKEN
 
 class Person(models.Model):
     name = models.CharField(max_length=25)
-    facebook_id = models.CharField(max_length=100)
-    state = models.CharField(max_length=25)
-    last_state_change = models.DateTimeField(auto_now=True)
+    facebook_id = models.CharField(max_length=100, null=True, blank=True)
+    state = models.CharField(max_length=25, null=True, blank=True)
+    last_state_change = models.DateTimeField(auto_now=True, null=True, blank=True)
 
 
 
