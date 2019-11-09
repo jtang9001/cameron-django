@@ -157,12 +157,9 @@ def handleMessage(user: Person, inMsg, nlp):
     elif isSubstringFor(msg, LEADERBOARD):
         sendLeaderboard(user)
 
-    elif "greetings" in nlp["entities"]:
-        user.send(random.choice(DIALOG["greetings"]))
-    elif "bye" in nlp["entities"]:
-        user.send(random.choice(DIALOG["bye"]))
-    elif "thanks" in nlp["entities"]:
-        user.send(random.choice(DIALOG["thanks"]))
+    elif "greetings" in nlp["entities"] or "bye" in nlp["entities"] or "thanks" in nlp["entities"]:
+        mostLikelyType, mostConfEntity = max(nlp["entities"].items(), key = lambda entityType, entity: entity[0]["confidence"])
+        user.send(random.choice(DIALOG[mostLikelyType]))
 
     elif len(msg.split()) < 30:
         print("in general keyword search")
