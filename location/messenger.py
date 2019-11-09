@@ -1,5 +1,6 @@
 import requests
 import json
+import random
 
 from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
@@ -7,12 +8,33 @@ from .tokens import FB_ACCESS_TOKEN
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from .utils import two_hrs_later
+from .utils import two_hrs_later, nlpParseTime
 
-LOCATION_LOOKUP = ["whos in", "who is in", "who"]
+LOCATION_LOOKUP = ["whos in", "who is in", "who in", "who"]
 PERSON_LOOKUP = ["wheres", "where is", "where"]
 #CHECK_IN = [re.compile(r"(i will be |ill be |im |i am )?(in |at )?(?P<place>[a-z]+)")]
 #CHECK_IN = ["i will be", "ill be", "im", "i am", "in ", "at ", "until ", "till ", "til "]
+
+DIALOG = {
+    "unsure_place": [
+        "I don't know where that is :(", 
+        "Not sure where that is :(", 
+        "I don't know where you mean :("
+    ],
+    "unsure_person": [
+        "Who's that now?",
+        "Not sure who that is",
+        "Never heard of them.",
+        "I don't know who that is"
+    ],
+    "incomprehension": [
+        "Not sure what you mean :(",
+        "What's that now?",
+        "I don't understand",
+        "Ich verstehe nicht!",
+        "Kindly try rephrasing?"
+    ]
+}
 
 def cleanMsg(msg):
     return ''.join(char.lower() for char in msg if char.isalnum() or char in " ")
@@ -65,16 +87,15 @@ def sendForPerson(user, person):
         user.send(f"{person.name} isn't checked in anywhere :(")
 
 def handleMessage(user: Person, inMsg, nlp):
-    print(user.name)
     msg = cleanMsg(inMsg)
-    print("IN:", msg)
+    print(f"{user.name} IN:", msg)
 
     if isSubstringFor(msg, LOCATION_LOOKUP):
         location = removeSubstrings(msg, LOCATION_LOOKUP)
         place = Place.objects.filter(name__istartswith = location).first()
 
         if place is None:
-            user.send("I don't know where you mean :(")
+            user.send(random.choice(DIALOG["unsure_place"]))
 
         else:
             sendForPlace(user, place)
@@ -89,7 +110,7 @@ def handleMessage(user: Person, inMsg, nlp):
                     sendForPlace(user, place)
 
         elif person is None:
-            user.send("I don't know who that is :(")
+            user.send(random.choice(DIALOG["unsure_person"]))
 
         else:
             sendForPerson(user, person)
@@ -103,20 +124,8 @@ def handleMessage(user: Person, inMsg, nlp):
 
                 if "datetime" in nlp["entities"]:
 
-                    if nlp["entities"]["datetime"][0]["type"] == "value":
-                        start_time = parse_datetime(nlp["entities"]["datetime"][0]["value"])
-                        end_time = two_hrs_later(parse_datetime(nlp["entities"]["datetime"][0]["value"]))
+                    start_time, end_time = nlpParseTime(nlp["entities"]["datetime"][0])
 
-                    elif nlp["entities"]["datetime"][0]["type"] == "interval":
-                        start_time = parse_datetime(nlp["entities"]["datetime"][0]["from"]["value"]) if "from" in nlp["entities"]["datetime"][0] else timezone.now()
-
-                        if "to" in nlp["entities"]["datetime"][0]:
-                            if nlp["entities"]["datetime"][0]["to"]["grain"] == "hour" and "from" in nlp["entities"]["datetime"][0]:
-                                end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]["value"]) - timezone.timedelta(hours=1)
-                            else:
-                                end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]["value"])
-                        else:
-                            end_time = two_hrs_later(start_time)
                     try:
                         newCheckIn = CheckIn(
                             person = user,
@@ -127,9 +136,12 @@ def handleMessage(user: Person, inMsg, nlp):
                         newCheckIn.clean()
                         newCheckIn.save()
                         user.ensureNoOverlapsWith(newCheckIn)
+                        user.send(f"✔️ I've checked you in for {newCheckIn.prettyNoName()}.")
+
                     except ValidationError as e:
                         user.send(e.message)
                         break
+                    
                     except Exception as e:
                         user.send(repr(e))
                         break
@@ -141,10 +153,10 @@ def handleMessage(user: Person, inMsg, nlp):
                 sendForPerson(user, personQ.first())
                 break
         else:
-            user.send(f"You said, '{inMsg}'. I don't understand, sorry!")
+            user.send(f"You said, '{inMsg}'. {random.choice(DIALOG['incomprehension'])}")
 
     else:
-        user.send(f"You said, '{inMsg}'. I don't understand, sorry!")
+        user.send(f"You said, '{inMsg}'. {random.choice(DIALOG['incomprehension'])}")
 
 def getNameFromPSID(psid):
     endpoint = f"https://graph.facebook.com/{psid}?fields=first_name&access_token={FB_ACCESS_TOKEN}"
