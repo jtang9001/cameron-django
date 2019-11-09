@@ -67,7 +67,7 @@ def handleMessage(user: Person, inMsg):
 
     if isSubstringFor(msg, LOCATION_LOOKUP):
         location = removeSubstrings(msg, LOCATION_LOOKUP)
-        place = Place.objects.filter(name__icontains = location).first()
+        place = Place.objects.filter(name__istartswith = location).first()
 
         if place is None:
             user.send("I don't know where you mean :(")
@@ -77,7 +77,7 @@ def handleMessage(user: Person, inMsg):
 
     elif isSubstringFor(msg, PERSON_LOOKUP):
         name = removeSubstrings(msg, PERSON_LOOKUP)
-        person = Person.objects.filter(name__icontains = name).first()
+        person = Person.objects.filter(name__istartswith = name).first()
 
         if person is None:
             user.send("I don't know who that is :(")
@@ -85,14 +85,14 @@ def handleMessage(user: Person, inMsg):
         else:
             sendForPerson(user, person)
 
-    elif len(msg.split() < 20):
+    elif len(msg.split()) < 20:
         for word in msg.split():
-            placeQ = Place.objects.filter(name__icontains = word)
-            personQ = Person.objects.filter(name__icontains = word)
+            placeQ = Place.objects.filter(name__istartswith = word)
+            personQ = Person.objects.filter(name__istartswith = word)
             if placeQ.exists():
                 sendForPlace(user, placeQ.first())
             elif personQ.exists():
-                sendForPlace(user, personQ.first())
+                sendForPerson(user, personQ.first())
 
     else:
         user.send(f"You said, '{inMsg}'. I don't understand, sorry!")
