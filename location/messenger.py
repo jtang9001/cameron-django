@@ -156,6 +156,8 @@ def handleMessage(user: Person, inMsg, nlp):
                     checkIns = CheckIn.objects.filter(person = user)
                     for checkin in checkIns:
                         if checkin.is_fresh():
+                            user.send(f"Checking you out of {checkin.place}.")
+                            sendForPerson(user, user)
                             checkin.scratch()
                 else:
                     sendIncomprehension(user, inMsg)
@@ -174,8 +176,10 @@ def handleMessage(user: Person, inMsg, nlp):
                     checkIns = CheckIn.objects.filter(person = person, place = place)
                     for checkin in checkIns:
                         if person == user and checkin.is_future_fresh():
+                            user.send(f"Deleting your future check in at {checkin.prettyNoName()}.")
                             checkin.scratch()
                         elif checkin.is_fresh():
+                            user.send(f"Checking {person} out of {place}.")
                             checkin.scratch()
 
             else:
