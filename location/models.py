@@ -100,7 +100,9 @@ class CheckIn(models.Model):
     scratched = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.person} at {self.place}, {self.start_time} to {self.end_time}"
+        localStart = timezone.localtime(self.start_time)
+        localEnd = timezone.localtime(self.end_time)
+        return f"{self.person} at {self.place}, {localStart} to {localEnd}"
 
     def prettyNoPlace(self):
         localStart = timezone.localtime(self.start_time)
@@ -119,7 +121,7 @@ class CheckIn(models.Model):
             return timezone.now() - timezone.timedelta(hours=2) <= self.start_time <= timezone.now()
 
     def is_future_fresh(self):
-        return timezone.now() <= self.start_time <= timezone.now() + timezone.timedelta(hours=4) and self.start_time < self.end_time
+        return timezone.now() <= self.start_time <= timezone.now() + timezone.timedelta(hours=8) and self.start_time < self.end_time
 
     def overlaps(self, other) -> bool:
         return self.start_time < other.end_time and self.end_time > other.start_time
