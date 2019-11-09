@@ -1,6 +1,7 @@
 import requests
 import json
 import random
+import itertools
 
 from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
@@ -13,6 +14,7 @@ PERSON_LOOKUP = ["wheres", "where is", "where"]
 SHORT_WORD_EXCEPTIONS = ["ed"]
 CHECK_OUT = ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing"]
 FIRST_PERSON = ["i", "me", "im", "imma"]
+LEADERBOARD = ["leaderboard", "leader board", "score"]
 #CHECK_IN = [re.compile(r"(i will be |ill be |im |i am )?(in |at )?(?P<place>[a-z]+)")]
 #CHECK_IN = ["i will be", "ill be", "im", "i am", "in ", "at ", "until ", "till ", "til "]
 
@@ -89,6 +91,18 @@ def sendForPerson(user, person):
 def sendIncomprehension(user, origMsg):
     user.send(f"You said, '{origMsg}'. {random.choice(DIALOG['incomprehension'])}")
 
+def sendLeaderboard(user):
+    people = Person.objects.all()
+    people = sorted(people, key=lambda person: person.getScore(), reverse=True)
+    peopleStrs = [f"{person} - {person.getScore()}" for person in people]
+
+    medals = ["🥇 ", "🥈 ", "🥉 "]
+
+    for i in range(len(medals)):
+        peopleStrs[i] = medals[i] + peopleStrs[i]
+    
+    user.send("\n".join(peopleStrs))
+
 def handleMessage(user: Person, inMsg, nlp):
     msg = cleanMsg(inMsg)
     print(f"{user.name} IN:", msg)
@@ -107,7 +121,10 @@ def handleMessage(user: Person, inMsg, nlp):
     elif isSubstringFor(msg, PERSON_LOOKUP):
         print("in person lookup")
         name = removeSubstrings(msg, PERSON_LOOKUP)
-        person = Person.objects.filter(name__istartswith = name).first()
+        if name in FIRST_PERSON:
+            person = user
+        else:
+            person = Person.objects.filter(name__istartswith = name).first()
 
         if "every" in msg:
             print("looking up everyone")
@@ -121,12 +138,15 @@ def handleMessage(user: Person, inMsg, nlp):
                     sentReply = True
             if not sentReply:
                 user.send("Nobody's checked in anywhere 🥺")
-
+        
         elif person is None:
             user.send(random.choice(DIALOG["unsure_person"]))
 
         else:
             sendForPerson(user, person)
+
+    elif isSubstringFor(msg, LEADERBOARD):
+        sendLeaderboard(user)
 
     elif len(msg.split()) < 30:
         print("in general keyword search")
