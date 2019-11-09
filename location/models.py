@@ -3,6 +3,7 @@ import json
 import requests
 from django.db import models
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 from datetime import date
 from .utils import two_hrs_later
 from .tokens import FB_ACCESS_TOKEN
@@ -20,6 +21,12 @@ class Person(models.Model):
                 continue
             if checkIn.overlaps(newCheckIn):
                 checkIn.end_time = timezone.now()
+                try:
+                    checkIn.clean()
+                except ValidationError as e:
+                    print(e)
+                    print(checkIn)
+                    checkIn.delete()
                 checkIn.scratched = True
                 checkIn.save()
 
@@ -110,7 +117,11 @@ class CheckIn(models.Model):
             return timezone.now() - timezone.timedelta(hours=2) <= self.start_time <= timezone.now()
 
     def is_future_fresh(self):
-        return timezone.now() <= self.start_time <= timezone.now() + timezone.timedelta(hours=4)
+        return timezone.now() <= self.start_time <= timezone.now() + timezone.timedelta(hours=4) and self.start_time < self.end_time
 
     def overlaps(self, other) -> bool:
         return self.start_time < other.end_time and self.end_time > other.start_time
+
+    def clean(self):
+        if self.start_time >= self.end_time:
+            raise ValidationError("End time must be strictly later than start time")
