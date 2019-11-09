@@ -36,7 +36,7 @@ class Person(models.Model):
 class Place(models.Model):
     name = models.CharField(max_length=25)
     color = models.CharField(
-        max_length=25, 
+        max_length=25,
         default="grey lighten-5"
     )
     photo = models.URLField(blank=True, null=True)
@@ -58,17 +58,18 @@ class CheckIn(models.Model):
         return f"{self.person} at {self.place}, {self.start_time} to {self.end_time}"
 
     def pretty(self):
-        return f"{self.person}: {timezone.make_aware(self.start_time.strftime('%H:%M'))} - {timezone.make_aware(self.end_time.strftime('%H:%M'))}"
+        localStart = timezone.localtime(self.start_time)
+        localEnd = timezone.localtime(self.end_time)
+        return f"{self.person}: {localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
 
     def is_fresh(self):
         if self.end_time: #should always be in this branch since end_time is now mandatory.
-            #return self.start_time <= timezone.now() <= self.end_time
-            return True
+            return self.start_time <= timezone.now() <= self.end_time
         else:
             return timezone.now() - timezone.timedelta(hours=2) <= self.start_time <= timezone.now()
 
     def is_future_fresh(self):
-        return timezone.now() <= self.start_time <= timezone.now() + timezone.timedelta(hours=4) 
+        return timezone.now() <= self.start_time <= timezone.now() + timezone.timedelta(hours=4)
 
     def overlaps(self, other) -> bool:
         return self.start_time < other.end_time and self.end_time > other.start_time

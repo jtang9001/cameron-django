@@ -15,7 +15,7 @@ class MessengerUser:
 
     def handleMessage(self, inMsg):
         msg = cleanMsg(inMsg)
-        print(msg)
+        print("IN:", msg)
 
         if "whos in" in msg:
             print("in who's in branch")
@@ -32,21 +32,15 @@ class MessengerUser:
                 print(place)
 
                 checkins = CheckIn.objects.filter(place = place)
-                print(checkins)
-                freshCheckInStrs = [checkin.pretty() for checkin in checkins if checkin.is_fresh()]
-                print(len(freshCheckInStrs))
-                futureCheckInStrs = [checkin.pretty() for checkin in checkins if checkin.is_future_fresh()]
-                print(len(futureCheckInStrs))
+                freshCheckIns = [checkin for checkin in checkins if checkin.is_fresh()]
+                print(freshCheckIns)
 
-                if len(freshCheckInStrs) > 0:
+                if len(freshCheckIns) > 0:
                     self.send(f"Here's who's in {place.name}:")
-                    self.send("\n".join(freshCheckInStrs))
+                    self.send("\n".join(checkin.pretty() for checkin in freshCheckIns))
+                    self.send("That's it!")
 
-                if len(futureCheckInStrs) > 0:
-                    self.send(f"Here's who will be in {place.name}:")
-                    self.send("\n".join(futureCheckInStrs))
-
-                elif len(freshCheckInStrs) == 0 and len(futureCheckInStrs) == 0:
+                elif len(freshCheckIns) == 0:
                     self.send(f"Nobody's checked into {place.name}. Would you like to?")
                     self.state = "checking_in"
 
@@ -54,7 +48,7 @@ class MessengerUser:
             self.send(f"You said, '{inMsg}'. I don't understand, sorry!")
 
     def send(self, outMsg, msgType = "RESPONSE"):
-        print(outMsg)
+        print("OUT:", outMsg)
         endpoint = f"https://graph.facebook.com/v5.0/me/messages?access_token={FB_ACCESS_TOKEN}"
         response_msg = json.dumps(
             {
