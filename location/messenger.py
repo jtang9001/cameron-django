@@ -52,7 +52,7 @@ class MessengerUser:
 
             else:
                 checkins = person.checkin_set.all()
-                checkinStrs = [checkin.prettyNoName() for checkin in checkins 
+                checkinStrs = [checkin.prettyNoName() for checkin in checkins
                                if checkin.is_fresh() or checkin.is_future_fresh()]
 
                 if len(checkinStrs) > 0:
