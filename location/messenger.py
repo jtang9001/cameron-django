@@ -1,7 +1,6 @@
 import requests
 import json
 import random
-import itertools
 
 from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
@@ -10,7 +9,7 @@ from django.core.exceptions import ValidationError
 from .utils import nlpParseTime
 
 LOCATION_LOOKUP = ["whos in", "who is in", "who in", "who"]
-PERSON_LOOKUP = ["wheres", "where is", "where"]
+PERSON_LOOKUP = ["wheres", "where is", "where am", "where"]
 SHORT_WORD_EXCEPTIONS = ["ed"]
 CHECK_OUT = ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing", "left"]
 FIRST_PERSON = ["i", "me", "im", "imma"]
@@ -157,8 +156,8 @@ def handleMessage(user: Person, inMsg, nlp):
     elif isSubstringFor(msg, LEADERBOARD):
         sendLeaderboard(user)
 
-    elif "greetings" in nlp["entities"] or "bye" in nlp["entities"] or "thanks" in nlp["entities"]:
-        mostLikelyType, mostConfEntity = max(nlp["entities"].items(), key = lambda entityType, entity: entity[0]["confidence"])
+    elif ("greetings" in nlp["entities"] or "bye" in nlp["entities"] or "thanks" in nlp["entities"]) and "datetime" not in nlp["entities"]:
+        mostLikelyType, mostConfEntity = max(nlp["entities"].items(), key = lambda kv: kv[1][0]["confidence"])
         user.send(random.choice(DIALOG[mostLikelyType]))
 
     elif len(msg.split()) < 30:
@@ -238,6 +237,7 @@ def handleMessage(user: Person, inMsg, nlp):
                         elif checkin.is_fresh():
                             user.send(f"Checking {person} out of {place} 💨")
                             checkin.scratch()
+                    sendForPerson(user, person)
 
             else:
                 if "datetime" in nlp["entities"]:
