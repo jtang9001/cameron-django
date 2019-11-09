@@ -6,6 +6,8 @@ from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
 
 from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+from .utils import two_hrs_later
 
 LOCATION_LOOKUP = ["whos in", "who is in"]
 PERSON_LOOKUP = ["wheres", "where is"]
@@ -101,15 +103,17 @@ def handleMessage(user: Person, inMsg, nlp):
                         newCheckIn = CheckIn(
                             person = user,
                             place = placeQ.first(),
-                            start_time = parse_datetime(nlp["entities"]["datetime"][0]["value"])
+                            start_time = parse_datetime(nlp["entities"]["datetime"][0]["value"]),
+                            end_time = two_hrs_later(parse_datetime(nlp["entities"]["datetime"][0]["value"]))
                         )
                         newCheckIn.save()
                     elif nlp["entities"]["datetime"][0]["type"] == "interval":
+                        start_time = parse_datetime(nlp["entities"]["datetime"][0]["from"]) if "from" in nlp["entities"]["datetime"][0] else timezone.now()
                         newCheckIn = CheckIn(
                             person = user,
                             place = placeQ.first(),
-                            start_time = parse_datetime(nlp["entities"]["datetime"][0]["from"]) if "from" in nlp["entities"]["datetime"][0] else None
-                            end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]) if "to" in nlp["entities"]["datetime"][0] else None
+                            start_time = start_time
+                            end_time = parse_datetime(nlp["entities"]["datetime"][0]["to"]) if "to" in nlp["entities"]["datetime"][0] else two_hrs_later(start_time)
                         )
                         newCheckIn.save()
                 break
