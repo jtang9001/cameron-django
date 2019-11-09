@@ -120,7 +120,7 @@ def handleMessage(user: Person, inMsg, nlp):
         else:
             sendForPerson(user, person)
 
-    if len(msg.split()) < 30:
+    elif len(msg.split()) < 30:
         refdPlaces = set()
         refdPeople = set()
         checkOut = False
@@ -137,7 +137,7 @@ def handleMessage(user: Person, inMsg, nlp):
                 refdPeople.add(user)
 
             placeQ = Place.objects.filter(name__istartswith = word)
-            personQ = Person.objects.filter(name__istartswith = word)
+            personQ = Person.objects.filter(name__istartswith = word.strip("s"))
 
             if placeQ.exists():
                 refdPlaces.add(placeQ.first())
