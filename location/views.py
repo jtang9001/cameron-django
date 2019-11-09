@@ -1,14 +1,14 @@
 import json
-import requests
 
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
-from .models import Place, CheckIn, Person, overlaps
+from .models import Place, CheckIn, Person
 from .forms import CheckInForm
-from .tokens import *
+from .tokens import FB_VERIFY_TOKEN
+from .messenger import MessengerUser
 
 def getPlaceFromSession(request):
     try:
@@ -40,7 +40,6 @@ def render_for_get(request, form):
 
     return render(request, "location/index.html", context)
 
-
 def index(request):
     if request.method == "POST":
         form = CheckInForm(request.POST)
@@ -60,7 +59,7 @@ def index(request):
             for checkIn in user.checkin_set.all():
                 if checkIn == newCheckIn:
                     continue
-                if overlaps(checkIn, newCheckIn):
+                if checkIn.overlaps(newCheckIn):
                     checkIn.end_time = timezone.now()
                     checkIn.scratched = True
                     checkIn.save()
@@ -99,7 +98,7 @@ def startPlannedCheckIn(request, checkInPK):
     for oldCheckIn in user.checkin_set.all():
         if oldCheckIn == checkin:
             continue
-        if overlaps(oldCheckIn, checkin):
+        if oldCheckIn.overlaps(checkin):
             oldCheckIn.end_time = timezone.now()
             oldCheckIn.scratched = True
             oldCheckIn.save()
@@ -132,23 +131,9 @@ def messenger(request):
             for entry in incoming_message['entry']:
                 for message in entry['messaging']:
                     userID = message['sender']['id']
+                    user = MessengerUser(userID)
                     message = message['message']['text']
-                    sendToMessenger(userID, f"You said, '{message}'. I'm busy. Check back later.")
+                    user.handleMessage(message)
             return HttpResponse("Webhook OK", status=200)
         except Exception:
             return HttpResponse("Webhook POST error", status=200)
-
-def sendToMessenger(userID, msg, msgType = "RESPONSE"):
-    endpoint = f"https://graph.facebook.com/v5.0/me/messages?access_token={FB_ACCESS_TOKEN}"
-    response_msg = json.dumps(
-        {
-            "messaging_type": msgType,
-            "recipient": {"id":userID}, 
-            "message": {"text":msg}
-        }
-    )
-    status = requests.post(
-        endpoint, 
-        headers={"Content-Type": "application/json"},
-        data=response_msg)
-    print(status.json())
