@@ -100,7 +100,7 @@ def sendForPerson(user, person):
 
 def sendIncomprehension(user, origMsg):
     user.send(f"You said, '{origMsg}'. {random.choice(DIALOG['incomprehension'])}")
-    user.send("Try saying, 'locations', 'who's in Cam', 'where's Jiayi', 'I'll be in ECHA in 5', or something like that.")
+    user.send("💡 Try saying, 'locations', 'who's in Cam', 'where's Jiayi', 'I'll be in ECHA in 5', or something like that.")
     user.send("You can send phrases you'd like to be recognized to the real Jiayi.")
 
 def sendLeaderboard(user):
@@ -173,6 +173,9 @@ def handleMessage(user: Person, inMsg, nlp):
                     sentReply = True
             if not sentReply:
                 user.send("Nobody's checked in anywhere 🥺")
+        
+        elif "can" in msg:
+            sendAllLocations(user)
 
         elif person is None:
             user.send(random.choice(DIALOG["unsure_person"]))
