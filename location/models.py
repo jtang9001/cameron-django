@@ -135,12 +135,18 @@ class CheckIn(models.Model):
     def prettyNoPlace(self):
         localStart = timezone.localtime(self.start_time)
         localEnd = timezone.localtime(self.end_time)
-        return f"{self.person}: {localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
+        if localStart <= timezone.now():
+            return f"{self.person}: until {localEnd.strftime('%H:%M')}"
+        else:
+            return f"{self.person}: {localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
 
     def prettyNoName(self):
         localStart = timezone.localtime(self.start_time)
         localEnd = timezone.localtime(self.end_time)
-        return f"{self.place}: {localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
+        if localStart <= timezone.now():
+            return f"{self.place}: until {localEnd.strftime('%H:%M')}"
+        else:
+            return f"{self.place}: {localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
 
     def scratch(self):
         print(f"scratching {self}")

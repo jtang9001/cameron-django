@@ -15,6 +15,7 @@ SHORT_WORD_EXCEPTIONS = ["ed"]
 CHECK_OUT = ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing", "left"]
 FIRST_PERSON = ["i", "me", "im", "imma"]
 LEADERBOARD = ["leaderboard", "leader board", "score"]
+LOCATION_LIST = ["locations", "places"]
 #CHECK_IN = [re.compile(r"(i will be |ill be |im |i am )?(in |at )?(?P<place>[a-z]+)")]
 #CHECK_IN = ["i will be", "ill be", "im", "i am", "in ", "at ", "until ", "till ", "til "]
 
@@ -112,6 +113,10 @@ def sendLeaderboard(user):
 
     user.send("\n".join(peopleStrs))
 
+def sendAllLocations(user):
+    user.send("You can check into all of the following places. Ask the real Jiayi to add more places.")
+    user.send(", ".join((place.name for place in Place.objects.all())))
+
 def makeNewCheckIn(user, person, place, start_time, end_time):
     try:
         newCheckIn = CheckIn(
@@ -154,9 +159,9 @@ def handleMessage(user: Person, inMsg, nlp):
         else:
             person = Person.objects.filter(name__istartswith = name).first()
 
-        if "every" in msg:
+        if "every" in msg or "people" in msg:
             print("looking up everyone")
-            user.send("Here's all the information I have:")
+            user.send("Here's everyone that checked in:")
             sentReply = False
             for place in Place.objects.all():
                 print(f"looking up in {place}")
@@ -175,6 +180,9 @@ def handleMessage(user: Person, inMsg, nlp):
 
     elif isSubstringFor(msg, LEADERBOARD):
         sendLeaderboard(user)
+
+    elif isSubstringFor(msg, LOCATION_LIST):
+
 
     elif ("greetings" in nlp["entities"] or "bye" in nlp["entities"] or "thanks" in nlp["entities"]) and "datetime" not in nlp["entities"]:
         mostLikelyType, mostConfEntity = max(nlp["entities"].items(), key = lambda kv: kv[1][0]["confidence"])
