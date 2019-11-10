@@ -100,6 +100,8 @@ def sendForPerson(user, person):
 
 def sendIncomprehension(user, origMsg):
     user.send(f"You said, '{origMsg}'. {random.choice(DIALOG['incomprehension'])}")
+    user.send("Try saying, 'locations', 'who's in Cam', 'where's Jiayi', 'I'll be in ECHA in 5', or something like that.")
+    user.send("You can send phrases you'd like to be recognized to the real Jiayi.")
 
 def sendLeaderboard(user):
     people = Person.objects.all()
@@ -182,7 +184,7 @@ def handleMessage(user: Person, inMsg, nlp):
         sendLeaderboard(user)
 
     elif isSubstringFor(msg, LOCATION_LIST):
-
+        sendAllLocations(user)
 
     elif ("greetings" in nlp["entities"] or "bye" in nlp["entities"] or "thanks" in nlp["entities"]) and "datetime" not in nlp["entities"]:
         mostLikelyType, mostConfEntity = max(nlp["entities"].items(), key = lambda kv: kv[1][0]["confidence"])
@@ -292,7 +294,7 @@ def handleMessage(user: Person, inMsg, nlp):
                                     user.send(f"{person} is already checked in: {checkin.prettyNoName()}.")
                                     user.send("You can specify a new end time to extend the check in.")
                                     break
-                            else:  
+                            else:
                                 makeNewCheckIn(user, person, place, start_time, end_time)
 
 
