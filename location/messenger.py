@@ -9,14 +9,14 @@ from django.core.exceptions import ValidationError
 from .utils import nlpParseTime, two_hrs_later
 from django.utils import timezone
 
-LOCATION_LOOKUP = ["whos in", "who is in", "who in", "who"]
-PERSON_LOOKUP = ["wheres", "where is", "where am", "where"]
-CHECK_OUT = ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing", "left"]
-SHORT_WORD_EXCEPTIONS = ["ed"]
-FIRST_PERSON = ["i", "me", "im", "imma"]
-SHORT_WORD_EXCEPTIONS += FIRST_PERSON
-LEADERBOARD = ["leaderboard", "leader board", "score", "scoreboard", "scores"]
-LOCATION_LIST = ["locations", "places"]
+TRIGGERS = {
+    "everybody": ["everyone", "everybody"],
+    "locations": ["locations", "places"],
+    "leaderboard": ["leaderboard", "leader board", "score", "scoreboard", "scores"],
+    "first_person": ["i", "me", "im", "imma"],
+    "short_word_exceptions": ["ed", "i", "me", "im"],
+    "checkout": ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing", "left"],
+}
 
 DIALOG = {
     "unsure_place": [
@@ -36,7 +36,7 @@ DIALOG = {
         "I don't understand 😓",
         "Kindly try rephrasing? 🤔"
     ],
-    "greetings": ["Hey", "Hello!", "Yoohoo!", "Yo", "Sup", "👋"],
+    "greetings": ["Hey", "Hello!", "Yoohoo!", "Yo", "Sup", "👋", "What's cookin'?"],
     "bye": ["See ya!", "Bye!", "I literally cannot leave", "👋"],
     "thanks": [
         "No problem!",
@@ -151,41 +151,14 @@ def handleMessage(user: Person, inMsg, nlp):
     msg = cleanMsg(inMsg)
     print(f"{user.name} IN:", msg)
 
-    '''
-    if isSubstringFor(msg, LOCATION_LOOKUP):
-        print("in location lookup")
-        location = removeSubstrings(msg, LOCATION_LOOKUP)
-        place = Place.objects.filter(name__istartswith = location).first()
-
-        if place is None:
-            user.send(random.choice(DIALOG["unsure_place"]))
-
-        else:
-            sendForPlace(user, place)
-
-    elif isSubstringFor(msg, PERSON_LOOKUP):
-        print("in person lookup")
-        name = removeSubstrings(msg, PERSON_LOOKUP)
-        if name in FIRST_PERSON:
-            person = user
-        else:
-            person = Person.objects.filter(name__istartswith = name).first()
-
-        if "every" in msg or "people" in msg:
-            sendAllLocations(user)
-
-        elif person is None:
-            user.send(random.choice(DIALOG["unsure_person"]))
-
-        else:
-            sendForPerson(user, person)
-    '''
-
-    if isSubstringFor(msg, LEADERBOARD):
+    if isSubstringFor(msg, TRIGGERS["leaderboard"]):
         sendLeaderboard(user)
 
-    elif isSubstringFor(msg, LOCATION_LIST):
+    elif isSubstringFor(msg, TRIGGERS["locations"]):
         sendAllLocations(user)
+
+    elif isSubstringFor(msg, TRIGGERS["everybody"]):
+        sendAllCheckIns(user)
 
     elif len(msg.split()) < 30:
         print("in general keyword search")
@@ -195,15 +168,15 @@ def handleMessage(user: Person, inMsg, nlp):
         personGiven = False
 
         for word in msg.split():
-            if len(word) <= 2 and word not in SHORT_WORD_EXCEPTIONS:
+            if len(word) <= 2 and word not in TRIGGERS["short_word_exceptions"]:
                 continue
 
-            if word in CHECK_OUT:
+            if word in TRIGGERS["checkout"]:
                 print("checkout word detected")
                 checkOut = True
                 continue
 
-            if word in FIRST_PERSON:
+            if word in TRIGGERS["first_person"]:
                 refdPeople.add(user)
                 personGiven = True
                 continue
