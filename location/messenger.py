@@ -6,14 +6,14 @@ from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
 
 from django.core.exceptions import ValidationError
-from .utils import nlpParseTime, two_hrs_later
+from .utils import nlpParseTime, two_hrs_later, getBestEntityFromSubset
 from django.utils import timezone
 
 TRIGGERS = {
     "everybody": ["everyone", "everybody"],
     "locations": ["locations", "places"],
     "leaderboard": ["leaderboard", "leader board", "score", "scoreboard", "scores"],
-    "first_person": ["i", "me", "im", "imma"],
+    "first_person": ["i", "me", "im", "imma", "ill"],
     "short_word_exceptions": ["ed", "i", "me", "im"],
     "checkout": ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing", "left"],
 }
@@ -247,9 +247,11 @@ def handleMessage(user: Person, inMsg, nlp):
                     sendForPerson(user, person)
 
             else:
-                if "datetime" in nlp["entities"]:
+                entityType, entity = getBestEntityFromSubset(nlp["entities"], ["datetime", "duration"])
+
+                if entityType is not None:
                     print("dt detected. checking in")
-                    start_time, end_time = nlpParseTime(nlp["entities"]["datetime"][0])
+                    start_time, end_time = nlpParseTime(entityType, entity)
 
                     for person in refdPeople:
                         makeNewCheckIn(user, person, place, start_time, end_time)
