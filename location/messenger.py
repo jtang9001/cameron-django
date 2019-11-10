@@ -173,9 +173,9 @@ def handleMessage(user: Person, inMsg, nlp):
                     sentReply = True
             if not sentReply:
                 user.send("Nobody's checked in anywhere 🥺")
-        
-        elif "can" in msg:
-            sendAllLocations(user)
+
+        #elif "can" in msg:
+            #sendAllLocations(user)
 
         elif person is None:
             user.send(random.choice(DIALOG["unsure_person"]))
@@ -201,8 +201,8 @@ def handleMessage(user: Person, inMsg, nlp):
         firstPersonGiven = False
 
         for word in msg.split():
-            # if len(word) <= 2 and word not in SHORT_WORD_EXCEPTIONS:
-            #     continue
+            if len(word) <= 2 and word not in SHORT_WORD_EXCEPTIONS and word not in FIRST_PERSON:
+                continue
 
             if word in CHECK_OUT:
                 print("checkout word detected")
