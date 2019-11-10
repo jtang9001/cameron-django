@@ -11,13 +11,12 @@ from django.utils import timezone
 
 LOCATION_LOOKUP = ["whos in", "who is in", "who in", "who"]
 PERSON_LOOKUP = ["wheres", "where is", "where am", "where"]
-SHORT_WORD_EXCEPTIONS = ["ed"]
 CHECK_OUT = ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing", "left"]
+SHORT_WORD_EXCEPTIONS = ["ed"]
 FIRST_PERSON = ["i", "me", "im", "imma"]
-LEADERBOARD = ["leaderboard", "leader board", "score"]
+SHORT_WORD_EXCEPTIONS += FIRST_PERSON
+LEADERBOARD = ["leaderboard", "leader board", "score", "scoreboard", "scores"]
 LOCATION_LIST = ["locations", "places"]
-#CHECK_IN = [re.compile(r"(i will be |ill be |im |i am )?(in |at )?(?P<place>[a-z]+)")]
-#CHECK_IN = ["i will be", "ill be", "im", "i am", "in ", "at ", "until ", "till ", "til "]
 
 DIALOG = {
     "unsure_place": [
@@ -98,6 +97,16 @@ def sendForPerson(user, person):
     else:
         user.send(f"{person.name} isn't checked in anywhere")
 
+def sendAllCheckIns(user):
+    user.send("Here's everyone that checked in:")
+    sentReply = False
+    for place in Place.objects.all():
+        if place.hasRelevantCheckIns():
+            sendForPlace(user, place)
+            sentReply = True
+    if not sentReply:
+        user.send("Nobody's checked in anywhere 🥺")
+
 def sendIncomprehension(user, origMsg):
     user.send(f"You said, '{origMsg}'. {random.choice(DIALOG['incomprehension'])}")
     user.send("💡 Try saying, 'locations', 'who's in Cam', 'where's Jiayi', 'I'll be in ECHA in 5', or something like that.")
@@ -142,6 +151,7 @@ def handleMessage(user: Person, inMsg, nlp):
     msg = cleanMsg(inMsg)
     print(f"{user.name} IN:", msg)
 
+    '''
     if isSubstringFor(msg, LOCATION_LOOKUP):
         print("in location lookup")
         location = removeSubstrings(msg, LOCATION_LOOKUP)
@@ -162,46 +172,30 @@ def handleMessage(user: Person, inMsg, nlp):
             person = Person.objects.filter(name__istartswith = name).first()
 
         if "every" in msg or "people" in msg:
-            print("looking up everyone")
-            user.send("Here's everyone that checked in:")
-            sentReply = False
-            for place in Place.objects.all():
-                print(f"looking up in {place}")
-                if place.hasRelevantCheckIns():
-                    print(f"found checkins in {place}")
-                    sendForPlace(user, place)
-                    sentReply = True
-            if not sentReply:
-                user.send("Nobody's checked in anywhere 🥺")
-
-        #elif "can" in msg:
-            #sendAllLocations(user)
+            sendAllLocations(user)
 
         elif person is None:
             user.send(random.choice(DIALOG["unsure_person"]))
 
         else:
             sendForPerson(user, person)
+    '''
 
-    elif isSubstringFor(msg, LEADERBOARD):
+    if isSubstringFor(msg, LEADERBOARD):
         sendLeaderboard(user)
 
     elif isSubstringFor(msg, LOCATION_LIST):
         sendAllLocations(user)
-
-    elif ("greetings" in nlp["entities"] or "bye" in nlp["entities"] or "thanks" in nlp["entities"]) and "datetime" not in nlp["entities"]:
-        mostLikelyType, mostConfEntity = max(nlp["entities"].items(), key = lambda kv: kv[1][0]["confidence"])
-        user.send(random.choice(DIALOG[mostLikelyType]))
 
     elif len(msg.split()) < 30:
         print("in general keyword search")
         refdPlaces = set()
         refdPeople = set()
         checkOut = False
-        firstPersonGiven = False
+        personGiven = False
 
         for word in msg.split():
-            if len(word) <= 2 and word not in SHORT_WORD_EXCEPTIONS and word not in FIRST_PERSON:
+            if len(word) <= 2 and word not in SHORT_WORD_EXCEPTIONS:
                 continue
 
             if word in CHECK_OUT:
@@ -211,7 +205,8 @@ def handleMessage(user: Person, inMsg, nlp):
 
             if word in FIRST_PERSON:
                 refdPeople.add(user)
-                firstPersonGiven = True
+                personGiven = True
+                continue
 
             placeQ = Place.objects.filter(name__istartswith = word)
             personQ = Person.objects.filter(name__istartswith = word.strip("s"))
@@ -221,6 +216,7 @@ def handleMessage(user: Person, inMsg, nlp):
 
             elif personQ.exists():
                 refdPeople.add(personQ.first())
+                personGiven = True
 
 
         if len(refdPlaces) > 1:
@@ -286,7 +282,7 @@ def handleMessage(user: Person, inMsg, nlp):
                         makeNewCheckIn(user, person, place, start_time, end_time)
 
                 else:
-                    if len(refdPeople) == 1 and user in refdPeople and not firstPersonGiven:
+                    if len(refdPeople) == 1 and user in refdPeople and not personGiven:
                         user.send(f"💡 To check in, specify at least a place and a person (ex. 'I'm in Cam') or a place and a time (ex. 'Cam till 5').")
                     else:
                         start_time = timezone.now()
@@ -302,6 +298,11 @@ def handleMessage(user: Person, inMsg, nlp):
 
 
                 sendForPlace(user, place)
+
+
+    elif ("greetings" in nlp["entities"] or "bye" in nlp["entities"] or "thanks" in nlp["entities"]) and "datetime" not in nlp["entities"]:
+        mostLikelyType, mostConfEntity = max(nlp["entities"].items(), key = lambda kv: kv[1][0]["confidence"])
+        user.send(random.choice(DIALOG[mostLikelyType]))
 
     else:
         sendIncomprehension(user, inMsg)
