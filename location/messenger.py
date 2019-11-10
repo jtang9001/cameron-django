@@ -18,6 +18,8 @@ TRIGGERS = {
     "checkout": ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing", "left"],
 }
 
+SMALL_TALK_ENTITIES = ["greetings", "bye", "thanks"]
+
 DIALOG = {
     "unsure_place": [
         "I don't know where that is 😅",
@@ -275,8 +277,11 @@ def handleMessage(user: Person, inMsg, nlp):
                 sendForPlace(user, place)
 
 
-    elif ("greetings" in nlp["entities"] or "bye" in nlp["entities"] or "thanks" in nlp["entities"]) and "datetime" not in nlp["entities"]:
-        mostLikelyType, mostConfEntity = max(nlp["entities"].items(), key = lambda kv: kv[1][0]["confidence"])
+    elif any(
+        (key in nlp["entities"] for key in SMALL_TALK_ENTITIES)
+        ) and "datetime" not in nlp["entities"]:
+        
+        mostLikelyType, mostConfEntity = getBestEntityFromSubset(nlp["entities"], SMALL_TALK_ENTITIES)
         user.send(random.choice(DIALOG[mostLikelyType]))
 
     else:
