@@ -108,7 +108,7 @@ def sendLeaderboard(user):
 
     medals = ["🥇 ", "🥈 ", "🥉 "]
 
-    for i in range(len(medals)):
+    for i in range(min(len(medals), len(peopleStrs))):
         peopleStrs[i] = medals[i] + peopleStrs[i]
 
     user.send("\n".join(peopleStrs))
