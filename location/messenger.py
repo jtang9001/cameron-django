@@ -162,12 +162,18 @@ def handleMessage(user: Person, inMsg, nlp):
     elif isSubstringFor(msg, TRIGGERS["everybody"]):
         sendAllCheckIns(user)
 
-    elif len(msg.split()) < 30:
+    elif len(msg.split()) < 50:
+        if any((key in nlp["entities"] for key in SMALL_TALK_ENTITIES)):
+            bestNLPtype, bestNLPentity = getBestEntityFromSubset(nlp["entities"], SMALL_TALK_ENTITIES)
+
         print("in general keyword search")
         refdPlaces = set()
         refdPeople = set()
         checkOut = False
         personGiven = False
+
+        if bestNLPtype == "greetings":
+            user.send(random.choice(DIALOG[bestNLPtype]))
 
         for word in msg.split():
             if len(word) <= 2 and word not in TRIGGERS["short_word_exceptions"]:
@@ -192,7 +198,6 @@ def handleMessage(user: Person, inMsg, nlp):
             elif personQ.exists():
                 refdPeople.add(personQ.first())
                 personGiven = True
-
 
         if len(refdPlaces) > 1:
             if len(refdPeople) == 0:
@@ -276,14 +281,9 @@ def handleMessage(user: Person, inMsg, nlp):
 
                 sendForPlace(user, place)
 
-
-    elif any(
-        (key in nlp["entities"] for key in SMALL_TALK_ENTITIES)
-        ) and "datetime" not in nlp["entities"]:
-        
-        mostLikelyType, mostConfEntity = getBestEntityFromSubset(nlp["entities"], SMALL_TALK_ENTITIES)
-        user.send(random.choice(DIALOG[mostLikelyType]))
-
+        if bestNLPtype == "bye" or bestNLPtype == "thanks":
+            user.send(random.choice(DIALOG[bestNLPtype]))
+            
     else:
         sendIncomprehension(user, inMsg)
 
