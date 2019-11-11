@@ -115,12 +115,12 @@ def sendAllCheckIns(user):
             sendForPlace(user, place)
             sentReply = True
     if not sentReply:
-        user.send("Nobody's checked in anywhere 🥺")
+        user.send("Nobody's checked in anywhere 😞")
 
 def sendIncomprehension(user, origMsg):
     user.send(f"You said, '{origMsg}'. {random.choice(DIALOG['incomprehension'])}")
     user.send("💡 Try saying, 'locations', 'who's in Cam', 'where's Jiayi', 'I'll be in ECHA in 5', or something like that.")
-    user.send("You can send phrases you'd like to be recognized to the real Jiayi.")
+    user.send("You can send suggestions to https://github.com/jtang9001/cameron-django/issues. Thanks!")
 
 def sendLeaderboard(user):
     people = Person.objects.all()
@@ -176,6 +176,7 @@ def handleMessage(user: Person, inMsg, nlp):
         refdPeople = set()
         checkOut = False
         personGiven = False
+        bestNLPtype = None
 
         if any((key in nlp["entities"] for key in SMALL_TALK_ENTITIES)):
             bestNLPtype, bestNLPentity = getBestEntityFromSubset(nlp["entities"], SMALL_TALK_ENTITIES)
@@ -292,7 +293,7 @@ def handleMessage(user: Person, inMsg, nlp):
 
         if bestNLPtype == "bye" or bestNLPtype == "thanks":
             user.send(random.choice(DIALOG[bestNLPtype]))
-            
+
     else:
         user.send(random.choice(DIALOG["long_msg"]))
 
