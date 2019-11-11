@@ -45,6 +45,14 @@ DIALOG = {
         "No, thank you 🙄",
         "Good to see the youth of today have some manners!",
         "You're welcome!"
+    ],
+    "long_msg": [
+        "How long did you spend typing that out?",
+        "Brevity is the soul of wit, hm?",
+        "I got bored fifty words in. (Actually, I stop reading at fifty words.)",
+        "Wow, that's a long message! I'm sure you have real friends who would appreciate it more :)",
+        "Don't you have, like, real people you can talk to?",
+        "I literally cannot read more than fifty words."
     ]
 
 }
@@ -163,14 +171,14 @@ def handleMessage(user: Person, inMsg, nlp):
         sendAllCheckIns(user)
 
     elif len(msg.split()) < 50:
-        if any((key in nlp["entities"] for key in SMALL_TALK_ENTITIES)):
-            bestNLPtype, bestNLPentity = getBestEntityFromSubset(nlp["entities"], SMALL_TALK_ENTITIES)
-
         print("in general keyword search")
         refdPlaces = set()
         refdPeople = set()
         checkOut = False
         personGiven = False
+
+        if any((key in nlp["entities"] for key in SMALL_TALK_ENTITIES)):
+            bestNLPtype, bestNLPentity = getBestEntityFromSubset(nlp["entities"], SMALL_TALK_ENTITIES)
 
         if bestNLPtype == "greetings":
             user.send(random.choice(DIALOG[bestNLPtype]))
@@ -231,7 +239,8 @@ def handleMessage(user: Person, inMsg, nlp):
                 for person in refdPeople:
                     sendForPerson(user, person)
             else:
-                sendIncomprehension(user, inMsg)
+                if bestNLPtype is None:
+                    sendIncomprehension(user, inMsg)
 
         elif len(refdPlaces) == 1:
             print("exactly one place referenced")
@@ -285,7 +294,7 @@ def handleMessage(user: Person, inMsg, nlp):
             user.send(random.choice(DIALOG[bestNLPtype]))
             
     else:
-        sendIncomprehension(user, inMsg)
+        user.send(random.choice(DIALOG["long_msg"]))
 
 def getNameFromPSID(psid):
     endpoint = f"https://graph.facebook.com/{psid}?fields=first_name&access_token={FB_ACCESS_TOKEN}"
