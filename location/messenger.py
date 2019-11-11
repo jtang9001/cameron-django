@@ -10,7 +10,7 @@ from .utils import nlpParseTime, two_hrs_later, getBestEntityFromSubset
 from django.utils import timezone
 
 TRIGGERS = {
-    "everybody": ["everyone", "everybody"],
+    "everybody": ["everyone", "everybody", "people"],
     "locations": ["locations", "places"],
     "leaderboard": ["leaderboard", "leader board", "score", "scoreboard", "scores"],
     "first_person": ["i", "me", "im", "imma", "ill"],
