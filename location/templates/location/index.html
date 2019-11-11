@@ -29,47 +29,20 @@
                                     <span class="card-title">{{ place.name }}</span>
                                     <ul class="collection">
                                         {% for checkin in checkins %}
-                                            {% if checkin.scratched %}
-                                                {% if checkin.is_future_fresh %}
-                                                    <li class="collection-item" style="color:lightgray; word-wrap: normal;">
-                                                        <s>{{ checkin.person }}<br><i>Planned: {{ checkin.start_time|time }}</i></s>
-                                                        <a href="{% url 'restore' checkin.pk %}" class="secondary-content"><i class="material-icons">settings_backup_restore</i></a>
+                                            <li class="collection-item {% if checkin.person.facebook_photo %}avatar{% endif %}" style="word-wrap: normal;">
+                                                <div>
+                                                    {% if checkin.person.facebook_photo %}
+                                                        <img src="{{checkin.person.facebook_photo}}" class="circle">
+                                                    {% endif %}
+                                                    {{ checkin.prettyNoPlace }}
+                                                    {% if checkin.is_future_fresh %}
+                                                        <a href="{% url 'scratch' checkin.pk %}" class="secondary-content"><i class="material-icons">close</i></a>
                                                         <a href="{% url 'start' checkin.pk %}" class="secondary-content"><i class="material-icons left">keyboard_tab</i></a>
-                                                    </li> 
-                                                {% elif checkin.is_fresh %}
-                                                    <li class="collection-item" style="color:lightgray; word-wrap: normal;">
-                                                        <s>{{ checkin.person }}<br>
-                                                            {% if checkin.end_time %}
-                                                                <i>Until {{ checkin.end_time|time }}</i></s>
-                                                            {% else %}
-                                                                <i>{{ checkin.start_time|timesince }} ago</i></s>
-                                                            {% endif %}
-                                                        <a href="{% url 'restore' checkin.pk %}" class="secondary-content"><i class="material-icons">settings_backup_restore</i></a>
-                                                    </li> 
-                                                {% endif %}
-                                            {% else %}
-                                                {% if checkin.is_future_fresh %}
-                                                    <li class="collection-item" style="word-wrap: normal;">
-                                                        <div>
-                                                            {{ checkin.person }}<br><i>Planned: {{ checkin.start_time|time }}{% if checkin.end_time %} - {{ checkin.end_time|time }}{% endif %}</i>
-                                                            <a href="{% url 'scratch' checkin.pk %}" class="secondary-content"><i class="material-icons">close</i></a>
-                                                            <a href="{% url 'start' checkin.pk %}" class="secondary-content"><i class="material-icons left">keyboard_tab</i></a>
-                                                        </div>
-                                                    </li> 
-                                                {% elif checkin.is_fresh %}
-                                                    <li class="collection-item" style="word-wrap: normal;">
-                                                        <div>
-                                                            <b>{{ checkin.person }}</b><br>
-                                                            {% if checkin.end_time %}
-                                                                <i>Until {{ checkin.end_time|time }}</i>
-                                                            {% else %}
-                                                                <i>{{ checkin.start_time|timesince }} ago</i>
-                                                            {% endif %}
-                                                            <a href="{% url 'scratch' checkin.pk %}" class="secondary-content"><i class="material-icons">close</i></a>
-                                                        </div>
-                                                    </li> 
-                                                {% endif %}
-                                            {% endif %}
+                                                    {% elif checkin.is_fresh %}
+                                                        <a href="{% url 'scratch' checkin.pk %}" class="secondary-content"><i class="material-icons">close</i></a>
+                                                    {% endif %}
+                                                </div>
+                                            </li>
                                         {% endfor %}
                                     </ul>
                                 </div>
