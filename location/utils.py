@@ -15,8 +15,8 @@ def nlpParseTime(user, entityType, entity):
     if entityType == "datetime":
 
         if entity["type"] == "value":
-            user.send("💡 Since I didn't recognize an end time, I'll check you in for two hours. \
-                You can overwrite this checkin by saying something like 'Cam till 5' or 'Cam from 5 to 7'.")
+            user.send("💡 Since I didn't recognize an end time, I'll check you in for two hours."
+                "You can overwrite this checkin by saying something like 'Cam till 5' or 'Cam from 5 to 7'.")
             start_time = parse_datetime(entity["value"])
             end_time = two_hrs_later(start_time)
 
@@ -29,8 +29,8 @@ def nlpParseTime(user, entityType, entity):
                 else:
                     end_time = parse_datetime(entity["to"]["value"])
             else:
-                user.send("💡 Since I didn't recognize an end time, I'll check you in for two hours. \
-                    You can overwrite this checkin by saying something like 'Cam till 5' or 'Cam from 5 to 7'.")
+                user.send("💡 Since I didn't recognize an end time, I'll check you in for two hours."
+                    "You can overwrite this checkin by saying something like 'Cam till 5' or 'Cam from 5 to 7'.")
                 end_time = two_hrs_later(start_time)
 
         return start_time, end_time
