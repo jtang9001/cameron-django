@@ -10,6 +10,7 @@ from .tokens import FB_ACCESS_TOKEN
 class Person(models.Model):
     name = models.CharField(max_length=25)
     facebook_id = models.CharField(max_length=100, null=True, blank=True)
+    facebook_photo = models.URLField(blank=True, null=True, max_length=500)
     state = models.CharField(max_length=25, null=True, blank=True)
     last_state_change = models.DateTimeField(auto_now=True, null=True, blank=True)
 
@@ -32,7 +33,7 @@ class Person(models.Model):
                 return True
         return False
 
-    def cleanCheckIns(self, newCheckIn):
+    def cleanCheckIns(self, newCheckIn, verbose = False):
         for checkIn in self.checkin_set.all():
             if timezone.now() - checkIn.end_time > timezone.timedelta(weeks=4):
                 print(f"deleting old checkin (>4 weeks): {checkIn}")
@@ -41,9 +42,15 @@ class Person(models.Model):
                 continue
             elif checkIn.overlaps(newCheckIn):
                 print(f"deleting overlapping checkin: {checkIn}")
+                if verbose:
+                    self.send(f"Checking {self.name} out from {checkIn.prettyNoName()}\
+                         because this overlaps with {newCheckIn.prettyNoName().}")
                 checkIn.scratch()
             elif checkIn.touches(newCheckIn):
                 print(f"merging touching checkins: {checkIn} and {newCheckIn}")
+                if verbose:
+                    self.send(f"Merging {self.name}'s check ins at {checkIn.prettyNoName()}\
+                         and {newCheckIn.prettyNoName().}")
                 newCheckIn.start_time = min(newCheckIn.start_time, checkIn.start_time)
                 newCheckIn.end_time = max(newCheckIn.end_time, checkIn.end_time)
                 newCheckIn.clean()
@@ -188,7 +195,10 @@ class CheckIn(models.Model):
         return self.start_time < other.end_time and self.end_time > other.start_time
 
     def touches(self, other) -> bool:
-        return self.start_time == other.end_time or other.start_time == self.end_time
+        return (
+            self.place == other.place and
+            abs( (self.start_time - other.start_time).total_seconds() ) < 120
+        )
 
     def clean(self):
         is_later_than_now(self.start_time)

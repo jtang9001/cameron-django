@@ -148,7 +148,7 @@ def makeNewCheckIn(user, person, place, start_time, end_time):
         )
         newCheckIn.clean()
         newCheckIn.save()
-        person.cleanCheckIns(newCheckIn)
+        person.cleanCheckIns(newCheckIn, verbose=True)
         user.send(f"✔️ I've checked {person} in for {newCheckIn.prettyNoName()}.")
 
     except ValidationError as e:
