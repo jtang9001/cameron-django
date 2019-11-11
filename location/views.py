@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Place, CheckIn, Person
 from .forms import CheckInForm
 from .tokens import FB_VERIFY_TOKEN
-from .messenger import handleMessage, getNameFromPSID
+from .messenger import handleMessage, getProfileFromPSID
 
 def getPlaceFromSession(request):
     try:
@@ -122,15 +122,14 @@ def messenger(request):
             for entry in incoming_message['entry']:
                 for message in entry['messaging']:
                     userID = message['sender']['id']
+                    fbProfile = getProfileFromPSID(userID)
 
-                    try:
-                        user = Person.objects.get(facebook_id = userID)
-                    except ObjectDoesNotExist:
-                        personName = getNameFromPSID(userID)
-                        user, created = Person.objects.update_or_create(
-                            name = personName,
-                            defaults = {"facebook_id": userID}
-                        )
+                    user, created = Person.objects.update_or_create(
+                        name = fbProfile["first_name"],
+                        defaults = {
+                            "facebook_id": userID,
+                            "facebook_photo": fbProfile["profile_pic"]},
+                    )
 
                     msg = message['message']['text']
                     nlp = message['message']['nlp']
