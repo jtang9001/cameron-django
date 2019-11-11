@@ -308,12 +308,11 @@ NICKNAMES = {
     "Grace Zheng": "Grass"
 }
 
-def getNameFromPSID(psid):
-    endpoint = f"https://graph.facebook.com/{psid}?fields=first_name,name&access_token={FB_ACCESS_TOKEN}"
+def getProfileFromPSID(psid):
+    endpoint = f"https://graph.facebook.com/{psid}?fields=first_name,name,profile_pic&access_token={FB_ACCESS_TOKEN}"
     r = requests.get(endpoint)
     response = json.loads(r.text)
     print(response)
     if response["name"] in NICKNAMES:
-        return NICKNAMES[response["name"]]
-    else:
-        return response["first_name"]
+        response["first_name"] = NICKNAMES[response["name"]]
+    return response
