@@ -278,10 +278,10 @@ def handleMessage(user: Person, inMsg, nlp):
                     if all((
                         len(refdPeople) == 1,
                         user in refdPeople,
-                        not personGiven,
-                        not isSubstringFor(msg, TRIGGERS["location_query"])
+                        not personGiven
                     )):
-                        user.send(f"💡 To check in, specify at least a place and a person (ex. 'I'm in Cam') or a place and a time (ex. 'Cam till 5').")
+                        if not isSubstringFor(msg, TRIGGERS["location_query"]):
+                            user.send(f"💡 To check in, specify at least a place and a person (ex. 'I'm in Cam') or a place and a time (ex. 'Cam till 5').")
                     else:
                         start_time = timezone.now()
                         end_time = two_hrs_later()
