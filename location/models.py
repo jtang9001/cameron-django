@@ -43,13 +43,13 @@ class Person(models.Model):
             elif checkIn.overlaps(newCheckIn):
                 print(f"deleting overlapping checkin: {checkIn}")
                 if verbose:
-                    self.send(f"Checking {self.name} out from {checkIn.prettyNoName()}"
+                    self.send(f"Checking {self.name} out from {checkIn.prettyNoName()} "
                             f"because this overlaps with {newCheckIn.prettyNoName()}.")
                 checkIn.scratch()
             elif checkIn.touches(newCheckIn):
                 print(f"merging touching checkins: {checkIn} and {newCheckIn}")
                 if verbose:
-                    self.send(f"Merging {self.name}'s check ins at {checkIn.prettyNoName()}"
+                    self.send(f"Merging {self.name}'s check ins at {checkIn.prettyNoName()} "
                                 f"and {newCheckIn.prettyNoName()}.")
                 newCheckIn.start_time = min(newCheckIn.start_time, checkIn.start_time)
                 newCheckIn.end_time = max(newCheckIn.end_time, checkIn.end_time)

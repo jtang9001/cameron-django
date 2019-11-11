@@ -16,6 +16,7 @@ TRIGGERS = {
     "first_person": ["i", "me", "im", "imma", "ill"],
     "short_word_exceptions": ["ed", "i", "me", "im"],
     "checkout": ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing", "left"],
+    "location_query": ["who", "anyone", "anybody"]
 }
 
 SMALL_TALK_ENTITIES = ["greetings", "bye", "thanks"]
@@ -274,7 +275,12 @@ def handleMessage(user: Person, inMsg, nlp):
                         makeNewCheckIn(user, person, place, start_time, end_time)
 
                 else:
-                    if len(refdPeople) == 1 and user in refdPeople and not personGiven:
+                    if all((
+                        len(refdPeople) == 1,
+                        user in refdPeople,
+                        not personGiven,
+                        not isSubstringFor(msg, TRIGGERS["location_query"])
+                    )):
                         user.send(f"💡 To check in, specify at least a place and a person (ex. 'I'm in Cam') or a place and a time (ex. 'Cam till 5').")
                     else:
                         start_time = timezone.now()
