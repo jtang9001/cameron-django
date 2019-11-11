@@ -148,7 +148,7 @@ def makeNewCheckIn(user, person, place, start_time, end_time):
         )
         newCheckIn.clean()
         newCheckIn.save()
-        person.ensureNoOverlapsWith(newCheckIn)
+        person.cleanCheckIns(newCheckIn)
         user.send(f"✔️ I've checked {person} in for {newCheckIn.prettyNoName()}.")
 
     except ValidationError as e:
@@ -268,7 +268,7 @@ def handleMessage(user: Person, inMsg, nlp):
 
                 if entityType is not None:
                     print("dt detected. checking in")
-                    start_time, end_time = nlpParseTime(entityType, entity)
+                    start_time, end_time = nlpParseTime(user, entityType, entity)
 
                     for person in refdPeople:
                         makeNewCheckIn(user, person, place, start_time, end_time)

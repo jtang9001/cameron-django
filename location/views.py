@@ -58,7 +58,7 @@ def index(request):
             )
             newCheckIn.save()
 
-            user.ensureNoOverlapsWith(newCheckIn)
+            user.cleanCheckIns(newCheckIn)
 
             request.session["person"] = form.cleaned_data["name"]
             request.session["place"] = form.cleaned_data["place"].name
@@ -89,7 +89,7 @@ def startPlannedCheckIn(request, checkInPK):
     checkin.start_time = timezone.now()
     checkin.scratched = False
     checkin.save()
-    user.ensureNoOverlapsWith(checkin)
+    user.cleanCheckIns(checkin)
     print(checkin)
     return HttpResponseRedirect("/")
 

@@ -32,14 +32,23 @@ class Person(models.Model):
                 return True
         return False
 
-    def ensureNoOverlapsWith(self, newCheckIn):
+    def cleanCheckIns(self, newCheckIn):
         for checkIn in self.checkin_set.all():
             if timezone.now() - checkIn.end_time > timezone.timedelta(weeks=4):
+                print(f"deleting old checkin (>4 weeks): {checkIn}")
                 checkIn.delete()
-            if checkIn == newCheckIn:
+            elif checkIn == newCheckIn:
                 continue
-            if checkIn.overlaps(newCheckIn):
+            elif checkIn.overlaps(newCheckIn):
+                print(f"deleting overlapping checkin: {checkIn}")
                 checkIn.scratch()
+            elif checkIn.touches(newCheckIn):
+                print(f"merging touching checkins: {checkIn} and {newCheckIn}")
+                newCheckIn.start_time = min(newCheckIn.start_time, checkIn.start_time)
+                newCheckIn.end_time = max(newCheckIn.end_time, checkIn.end_time)
+                newCheckIn.clean()
+                newCheckIn.save()
+                checkIn.delete()
 
     def send(self, outMsg, msgType = "RESPONSE"):
         print("OUT:", outMsg)
@@ -177,6 +186,9 @@ class CheckIn(models.Model):
 
     def overlaps(self, other) -> bool:
         return self.start_time < other.end_time and self.end_time > other.start_time
+
+    def touches(self, other) -> bool:
+        return self.start_time == other.end_time or other.start_time == self.end_time
 
     def clean(self):
         is_later_than_now(self.start_time)
