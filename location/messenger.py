@@ -297,9 +297,17 @@ def handleMessage(user: Person, inMsg, nlp):
     else:
         user.send(random.choice(DIALOG["long_msg"]))
 
+
+NICKNAMES = {
+    "Grace Zheng": "Grass"
+}
+
 def getNameFromPSID(psid):
-    endpoint = f"https://graph.facebook.com/{psid}?fields=first_name&access_token={FB_ACCESS_TOKEN}"
+    endpoint = f"https://graph.facebook.com/{psid}?fields=first_name,name&access_token={FB_ACCESS_TOKEN}"
     r = requests.get(endpoint)
     response = json.loads(r.text)
     print(response)
-    return response["first_name"]
+    if response["name"] in NICKNAMES:
+        return NICKNAMES[response["name"]]
+    else:
+        return response["first_name"]
