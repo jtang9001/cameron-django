@@ -34,7 +34,8 @@
                                                     {% if checkin.person.facebook_photo %}
                                                         <img src="{{checkin.person.facebook_photo}}" class="circle">
                                                     {% endif %}
-                                                    {{ checkin.prettyNoPlace }}
+                                                    <span class="title"><b>{{ checkin.person }}</b></span>
+                                                    <br>{{ checkin.prettyTime }}
                                                     {% if checkin.is_future_fresh %}
                                                         <a href="{% url 'scratch' checkin.pk %}" class="secondary-content"><i class="material-icons">close</i></a>
                                                         <a href="{% url 'start' checkin.pk %}" class="secondary-content"><i class="material-icons left">keyboard_tab</i></a>
@@ -56,7 +57,7 @@
                     </div>
                 {% endif %}
                 </div>
-                
+
                 <div class="col s12 m12 l4 xl4">
                     {% if form.errors %}
                         <div class="card-panel red darken-1">
@@ -84,7 +85,7 @@
                                     <li class="collection-item">{{ person.name }}<div class="secondary-content">{{ person.getScore }}</div></li>
                                     {% endfor %}
                                 </ul>
-                                
+
                             </div>
                         </div>
                 </div>
@@ -116,5 +117,5 @@
             );
         });
         </script>
-    </body> 
+    </body>
 </html>

@@ -164,6 +164,14 @@ class CheckIn(models.Model):
         else:
             return f"{self.place}: {localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
 
+    def prettyTime(self):
+        localStart = timezone.localtime(self.start_time)
+        localEnd = timezone.localtime(self.end_time)
+        if localStart <= timezone.now():
+            return f"Until {localEnd.strftime('%H:%M')}"
+        else:
+            return f"{localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
+
     def scratch(self):
         print(f"scratching {self}")
         self.scratched = True
