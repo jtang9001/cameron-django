@@ -199,7 +199,7 @@ def handleMessage(user: Person, inMsg, nlp):
                 personGiven = True
                 continue
 
-            placeQ = Place.objects.filter(name__istartswith = word)
+            placeQ = Place.objects.filter(name__istartswith = word) | Place.objects.filter(aliases__icontains = word)
             personQ = Person.objects.filter(name__istartswith = word.strip("s"))
 
             if placeQ.exists():

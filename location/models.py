@@ -110,6 +110,7 @@ class Place(models.Model):
         default="grey lighten-5"
     )
     photo = models.URLField(blank=True, null=True)
+    aliases = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
