@@ -38,7 +38,7 @@
                                                     <br>{{ checkin.prettyTime }}
                                                     {% if checkin.is_future_fresh %}
                                                         <a href="{% url 'scratch' checkin.pk %}" class="secondary-content"><i class="material-icons">close</i></a>
-                                                        <a href="{% url 'start' checkin.pk %}" class="secondary-content"><i class="material-icons">keyboard_tab</i></a>
+                                                        <a href="{% url 'start' checkin.pk %}">Start now</a>
                                                     {% elif checkin.is_fresh %}
                                                         <a href="{% url 'scratch' checkin.pk %}" class="secondary-content"><i class="material-icons">close</i></a>
                                                     {% endif %}
