@@ -46,7 +46,7 @@ class Person(models.Model):
                     self.send(f"Checking {self.name} out from {checkIn.prettyNoName()} "
                             f"because this overlaps with {newCheckIn.prettyNoName()}.")
                 checkIn.scratch()
-            elif checkIn.touches(newCheckIn):
+            elif checkIn.touches(newCheckIn, assertActive = True):
                 print(f"merging touching checkins: {checkIn} and {newCheckIn}")
                 if verbose:
                     self.send(f"Merging {self.name}'s check ins at {checkIn.prettyNoName()} "
@@ -203,7 +203,10 @@ class CheckIn(models.Model):
     def overlaps(self, other) -> bool:
         return self.start_time < other.end_time and self.end_time > other.start_time
 
-    def touches(self, other) -> bool:
+    def touches(self, other, assertActive = False) -> bool:
+        if self.scratched or other.scratched:
+            return False
+
         minTimeGap = min(
             (self.end_time - other.start_time).total_seconds(),
             (other.end_time - self.start_time).total_seconds(),
