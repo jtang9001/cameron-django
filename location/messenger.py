@@ -2,7 +2,7 @@ import requests
 import json
 import random
 
-from .models import Place, CheckIn, Person, getPersonByName
+from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
 from .utils import cleanMsg
 
@@ -198,12 +198,12 @@ def handleMessage(user: Person, inMsg, nlp):
                 continue
 
             placeQ = Place.objects.filter(name__istartswith = word) | Place.objects.filter(aliases__icontains = word)
-            personQ = getPersonByName(word.strip("s"))
+            personQ = Person.objects.filter(name__istartswith = word) | Person.objects.filter(nicknames__icontains = word)
 
             if placeQ.exists():
                 refdPlaces.add(placeQ.first())
 
-            elif personQ is not None:
+            elif personQ.exists():
                 refdPeople.add(personQ.first())
                 personGiven = True
 

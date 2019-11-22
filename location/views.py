@@ -125,10 +125,10 @@ def messenger(request):
             for entry in incoming_message['entry']:
                 for message in entry['messaging']:
 
-                    if message["mid"] in MID_CACHE:
+                    if message["message"]["mid"] in MID_CACHE:
                         return HttpResponse("OK - Duplicate message", status=200)
                     else:
-                        MID_CACHE.append(message["mid"])
+                        MID_CACHE.append(message["message"]["mid"])
 
                     userID = message['sender']['id']
                     fbProfile = getProfileFromPSID(userID)

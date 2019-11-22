@@ -237,12 +237,3 @@ def getOrCreatePersonByName(name):
         person = Person(name = name)
         person.save()
         return Person
-
-def getPersonByName(name):
-    name = cleanMsg(name)
-    if Person.objects.filter(name__istartswith = name).exists():
-        return Person.objects.filter(name__istartswith = name).first()
-    elif Person.objects.filter(nicknames__icontains = name).exists():
-        return Person.objects.filter(nicknames__icontains = name).first()
-    else:
-        return None
