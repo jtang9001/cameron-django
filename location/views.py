@@ -102,8 +102,8 @@ def restoreCheckIn(request, checkInPK):
     print(checkin)
     return HttpResponseRedirect("/")
 
-@csrf_exempt
 MID_CACHE = collections.deque(maxlen=1000)
+@csrf_exempt
 def messenger(request):
     if request.method == "GET":
         print(request.GET)

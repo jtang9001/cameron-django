@@ -3,7 +3,7 @@ import requests
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from .utils import two_hrs_later, is_later_than_now
+from .utils import two_hrs_later, is_later_than_now, cleanMsg
 from .tokens import FB_ACCESS_TOKEN
 
 class Person(models.Model):
