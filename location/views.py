@@ -134,7 +134,7 @@ def messenger(request):
                     fbProfile = getProfileFromPSID(userID)
 
                     user = getOrCreatePersonByName(fbProfile["first_name"])
-                    user.facebook_id = userID,
+                    user.facebook_id = userID
                     user.facebook_photo = fbProfile["profile_pic"]
                     user.save()
 
