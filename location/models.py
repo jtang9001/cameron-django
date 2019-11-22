@@ -6,11 +6,11 @@ from django.core.exceptions import ValidationError
 from .utils import two_hrs_later, is_later_than_now
 from .tokens import FB_ACCESS_TOKEN
 
-
 class Person(models.Model):
     name = models.CharField(max_length=25)
     facebook_id = models.CharField(max_length=100, null=True, blank=True)
     facebook_photo = models.URLField(blank=True, null=True, max_length=500)
+    nicknames = models.TextField(blank=True, null=True)
     state = models.CharField(max_length=25, null=True, blank=True)
     last_state_change = models.DateTimeField(auto_now=True, null=True, blank=True)
 

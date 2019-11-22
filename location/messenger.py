@@ -4,6 +4,7 @@ import random
 
 from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
+from .utils import getPersonByName, cleanMsg
 
 from django.core.exceptions import ValidationError
 from .utils import nlpParseTime, two_hrs_later, getBestEntityFromSubset
@@ -57,9 +58,6 @@ DIALOG = {
     ]
 
 }
-
-def cleanMsg(msg):
-    return ''.join(char.lower() for char in msg if char.isalnum() or char in " ")
 
 def isSubstringFor(string: str, arrOfSubstrings):
     for substr in arrOfSubstrings:
@@ -200,12 +198,12 @@ def handleMessage(user: Person, inMsg, nlp):
                 continue
 
             placeQ = Place.objects.filter(name__istartswith = word) | Place.objects.filter(aliases__icontains = word)
-            personQ = Person.objects.filter(name__istartswith = word.strip("s"))
+            personQ = getPersonByName(word.strip("s"))
 
             if placeQ.exists():
                 refdPlaces.add(placeQ.first())
 
-            elif personQ.exists():
+            elif personQ is not None:
                 refdPeople.add(personQ.first())
                 personGiven = True
 
@@ -304,15 +302,15 @@ def handleMessage(user: Person, inMsg, nlp):
         user.send(random.choice(DIALOG["long_msg"]))
 
 
-NICKNAMES = {
-    "Grace Zheng": "Grass"
-}
+# NICKNAMES = {
+#     "Grace Zheng": "Grass"
+# }
 
 def getProfileFromPSID(psid):
     endpoint = f"https://graph.facebook.com/{psid}?fields=first_name,name,profile_pic&access_token={FB_ACCESS_TOKEN}"
     r = requests.get(endpoint)
     response = json.loads(r.text)
     print(response)
-    if response["name"] in NICKNAMES:
-        response["first_name"] = NICKNAMES[response["name"]]
+    # if response["name"] in NICKNAMES:
+    #     response["first_name"] = NICKNAMES[response["name"]]
     return response

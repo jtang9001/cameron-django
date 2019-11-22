@@ -1,6 +1,10 @@
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from .models import Person
+
+def cleanMsg(msg):
+    return ''.join(char.lower() for char in msg if char.isalnum() or char in " ")
 
 def two_hrs_later(start = None):
     if start == None:
@@ -55,3 +59,23 @@ def getBestEntityFromSubset(entities, subset):
                 maxConf = entity["confidence"]
 
     return mostLikelyEntityType, mostLikelyEntity
+
+def getOrCreatePersonByName(name):
+    name = cleanMsg(name)
+    if Person.objects.filter(name__istartswith = name).exists():
+        return Person.objects.filter(name__istartswith = name).first()
+    elif Person.objects.filter(nicknames__icontains = name).exists():
+        return Person.objects.filter(nicknames__icontains = name).first()
+    else:
+        person = Person(name = name)
+        person.save()
+        return Person
+
+def getPersonByName(name):
+    name = cleanMsg(name)
+    if Person.objects.filter(name__istartswith = name).exists():
+        return Person.objects.filter(name__istartswith = name).first()
+    elif Person.objects.filter(nicknames__icontains = name).exists():
+        return Person.objects.filter(nicknames__icontains = name).first()
+    else:
+        return None

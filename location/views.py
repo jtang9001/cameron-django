@@ -1,15 +1,18 @@
 import json
 import traceback
+import collections
 
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
+
 from .models import Place, CheckIn, Person
 from .forms import CheckInForm
 from .tokens import FB_VERIFY_TOKEN
 from .messenger import handleMessage, getProfileFromPSID
+from .utils import getOrCreatePersonByName
 
 def getPlaceFromSession(request):
     try:
@@ -46,7 +49,7 @@ def index(request):
         print(request.POST)
         form = CheckInForm(request.POST)
         if form.is_valid():
-            user, userCreated = Person.objects.get_or_create(name=form.cleaned_data["name"])
+            user = getOrCreatePersonByName(form.cleaned_data["name"])
 
             formDataCopy = form.cleaned_data.copy()
             del formDataCopy["name"]
@@ -101,6 +104,7 @@ def restoreCheckIn(request, checkInPK):
     return HttpResponseRedirect("/")
 
 @csrf_exempt
+MID_CACHE = collections.deque(maxlen=1000)
 def messenger(request):
     if request.method == "GET":
         print(request.GET)
@@ -121,15 +125,19 @@ def messenger(request):
         try:
             for entry in incoming_message['entry']:
                 for message in entry['messaging']:
+
+                    if message["mid"] in MID_CACHE:
+                        return HttpResponse("OK - Duplicate message", status=200)
+                    else:
+                        MID_CACHE.append(message["mid"])
+
                     userID = message['sender']['id']
                     fbProfile = getProfileFromPSID(userID)
 
-                    user, created = Person.objects.update_or_create(
-                        name = fbProfile["first_name"],
-                        defaults = {
-                            "facebook_id": userID,
-                            "facebook_photo": fbProfile["profile_pic"]},
-                    )
+                    user = getOrCreatePersonByName(fbProfile["first_name"])
+                    user.facebook_id = userID,
+                    user.facebook_photo = fbProfile["profile_pic"]
+                    user.save()
 
                     msg = message['message']['text']
                     nlp = message['message']['nlp']
