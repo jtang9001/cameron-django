@@ -225,3 +225,24 @@ class CheckIn(models.Model):
             raise ValidationError("Check in duration is too long")
         if self.start_time - timezone.now() > timezone.timedelta(hours=18):
             raise ValidationError("Start date is too far in the future")
+
+
+def getOrCreatePersonByName(name):
+    name = cleanMsg(name)
+    if Person.objects.filter(name__istartswith = name).exists():
+        return Person.objects.filter(name__istartswith = name).first()
+    elif Person.objects.filter(nicknames__icontains = name).exists():
+        return Person.objects.filter(nicknames__icontains = name).first()
+    else:
+        person = Person(name = name)
+        person.save()
+        return Person
+
+def getPersonByName(name):
+    name = cleanMsg(name)
+    if Person.objects.filter(name__istartswith = name).exists():
+        return Person.objects.filter(name__istartswith = name).first()
+    elif Person.objects.filter(nicknames__icontains = name).exists():
+        return Person.objects.filter(nicknames__icontains = name).first()
+    else:
+        return None

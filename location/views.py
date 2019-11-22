@@ -8,11 +8,10 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Place, CheckIn, Person
+from .models import Place, CheckIn, Person, getOrCreatePersonByName
 from .forms import CheckInForm
 from .tokens import FB_VERIFY_TOKEN
 from .messenger import handleMessage, getProfileFromPSID
-from .utils import getOrCreatePersonByName
 
 def getPlaceFromSession(request):
     try:

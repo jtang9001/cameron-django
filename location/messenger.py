@@ -2,9 +2,9 @@ import requests
 import json
 import random
 
-from .models import Place, CheckIn, Person
+from .models import Place, CheckIn, Person, getPersonByName
 from .tokens import FB_ACCESS_TOKEN
-from .utils import getPersonByName, cleanMsg
+from .utils import cleanMsg
 
 from django.core.exceptions import ValidationError
 from .utils import nlpParseTime, two_hrs_later, getBestEntityFromSubset
