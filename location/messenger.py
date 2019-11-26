@@ -200,7 +200,7 @@ def handleMessage(user: Person, inMsg, nlp):
                 continue
 
             placeQ = Place.objects.filter(name__istartswith = word) | Place.objects.filter(aliases__icontains = word)
-            personQ = Person.objects.filter(name__istartswith = word.strip(s)) | Person.objects.filter(nicknames__icontains = wordword.strip(s))
+            personQ = Person.objects.filter(name__istartswith = word.strip('s')) | Person.objects.filter(nicknames__icontains = word.strip('s'))
 
             if placeQ.exists():
                 print(placeQ.first())
@@ -234,7 +234,7 @@ def handleMessage(user: Person, inMsg, nlp):
                         if checkin.is_fresh():
                             user.send(f"Checking {person} out of {checkin.place} 💨")
                             if person != user:
-                                person.send(f"{user} checked you out of {place} 💨")
+                                person.send(f"{user} checked you out of {checkin.place} 💨")
                             checkin.scratch()
                             sentMsg = True
 
