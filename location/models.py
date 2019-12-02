@@ -57,20 +57,35 @@ class Person(models.Model):
                 newCheckIn.save()
                 checkIn.delete()
 
-    def send(self, outMsg, msgType = "RESPONSE"):
+    def send(self, outMsg, msgType = "RESPONSE", quick_replies = None):
         print("OUT:", outMsg)
         endpoint = f"https://graph.facebook.com/v5.0/me/messages?access_token={FB_ACCESS_TOKEN}"
+        
+        if quick_replies is None:
+            msgDict = {"text": outMsg}
+        else:
+            msgDict = {
+                "text": outMsg,
+                "quick_replies": [{
+                    "content_type": "text",
+                    "title": item,
+                    "payload": item} for item in quick_replies]
+            }
+
         response_msg = json.dumps(
             {
                 "messaging_type": msgType,
                 "recipient": {"id": self.facebook_id},
-                "message": {"text": outMsg}
+                "message": msgDict
             }
         )
+
         status = requests.post(
             endpoint,
             headers={"Content-Type": "application/json"},
-            data=response_msg)
+            data=response_msg
+        )
+
         print(status.json())
 
     def getScore(self):

@@ -121,7 +121,8 @@ def sendAllCheckIns(user):
 def sendIncomprehension(user, origMsg):
     user.send(f"You said, '{origMsg}'. {random.choice(DIALOG['incomprehension'])}")
     user.send("💡 Try saying, 'locations', 'who's in Cam', 'where's Jiayi', 'I'll be in ECHA in 5', or something like that.")
-    user.send("You can send suggestions to https://github.com/jtang9001/cameron-django/issues. Thanks!")
+    user.send("You can send suggestions to https://github.com/jtang9001/cameron-django/issues. Thanks!",
+              quick_replies=["Locations", "Who's in Cam?", "Where's Jiayi?", "Leaderboard"])
 
 def sendLeaderboard(user):
     people = Person.objects.all()
