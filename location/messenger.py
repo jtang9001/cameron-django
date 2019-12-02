@@ -92,7 +92,8 @@ def sendForPlace(user, place):
         user.send("\n".join(checkin.prettyNoPlace() for checkin in futureCheckIns))
 
     elif len(freshCheckIns) == 0 and len(futureCheckIns) == 0:
-        user.send(f"Nobody's checked into {place.name}.")
+        user.send(f"Nobody's checked into {place.name}.",
+        quick_replies=[f"I'm in {place}"])
 
 def sendForPerson(user, person):
     checkins = person.checkin_set.all()
@@ -300,8 +301,7 @@ def handleMessage(user: Person, inMsg, nlp):
                         not personGiven
                     )):
                         if not isSubstringFor(msg, TRIGGERS["location_query"]):
-                            user.send(f"💡 To check in, specify at least a place and a person (ex. 'I'm in Cam') or a place and a time (ex. 'Cam till 5').",
-                                quick_replies=[f"I'm in {place}"])
+                            user.send(f"💡 To check in, specify at least a place and a person (ex. 'I'm in Cam') or a place and a time (ex. 'Cam till 5').")
                     else:
                         start_time = timezone.now()
                         end_time = two_hrs_later()
