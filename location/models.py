@@ -122,7 +122,7 @@ class Person(models.Model):
         ordering = ["name"]
 
 class Place(models.Model):
-    name = models.CharField(max_length=25)
+    name = models.CharField(max_length=12)
     color = models.CharField(
         max_length=25,
         default="grey lighten-5"

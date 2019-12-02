@@ -4,11 +4,11 @@ import random
 
 from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
-from .utils import cleanMsg
+from .utils import cleanMsg, nlpParseTime, two_hrs_later, getBestEntityFromSubset
 
 from django.core.exceptions import ValidationError
-from .utils import nlpParseTime, two_hrs_later, getBestEntityFromSubset
 from django.utils import timezone
+from django.db.models import Count
 
 TRIGGERS = {
     "everybody": ["everyone", "everybody", "people"],
@@ -135,8 +135,12 @@ def sendLeaderboard(user):
     user.send("\n".join(peopleStrs))
 
 def sendAllLocations(user):
-    user.send("You can check into all of the following places. Ask the real Jiayi to add more places.")
-    user.send(", ".join((place.name for place in Place.objects.all())))
+    user.send("You can check into all of the following places. Request new places at https://github.com/jtang9001/cameron-django/issues. Thanks!")
+    user.send(
+        ", ".join( (place.name for place in Place.objects.all()) ),
+        quick_replies=[f"I'm in {place.name}" for place in Place.objects.filter(
+            ).annotate(checkin_count=Count("checkin")).order_by('checkin_count')]
+    )
 
 def makeNewCheckIn(user, person, place, start_time, end_time):
     try:
