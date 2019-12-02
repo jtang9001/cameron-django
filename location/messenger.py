@@ -135,11 +135,11 @@ def sendLeaderboard(user):
     user.send("\n".join(peopleStrs))
 
 def sendAllLocations(user):
-    user.send("You can check into all of the following places. Request new places at https://github.com/jtang9001/cameron-django/issues. Thanks!")
+    user.send("You can check into all of the following places. Request new places at https://github.com/jtang9001/cameron-django/issues.")
     user.send(
         ", ".join( (place.name for place in Place.objects.all()) ),
         quick_replies=[f"I'm in {place.name}" for place in Place.objects.filter(
-            ).annotate(checkin_count=Count("checkin")).order_by('checkin_count')]
+            ).annotate(checkin_count=Count("checkin")).order_by('-checkin_count')[:5]]
     )
 
 def makeNewCheckIn(user, person, place, start_time, end_time):
