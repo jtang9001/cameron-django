@@ -11,7 +11,7 @@ from .utils import nlpParseTime, two_hrs_later, getBestEntityFromSubset
 from django.utils import timezone
 
 TRIGGERS = {
-    "everybody": ["everyone", "everybody", "people"],
+    "everybody": ["everyone", "everybody", "people", "checked in"],
     "locations": ["locations", "places"],
     "leaderboard": ["leaderboard", "leader board", "score", "scoreboard", "scores", "top"],
     "first_person": ["i", "me", "im", "imma", "ill"],
@@ -158,6 +158,27 @@ def makeNewCheckIn(user, person, place, start_time, end_time):
     except Exception as e:
         user.send(repr(e))
 
+def checkout(checkin, user, person):
+    #returns if a message was sent or not
+    print(checkin)
+
+    if checkin.is_fresh():
+        user.send(f"Checking {person} out of {checkin.place} 💨")
+        if person != user:
+            person.send(f"{user} checked you out of {checkin.place} 💨")
+        checkin.scratch()
+        return True
+
+    elif checkin.is_future_fresh():
+        user.send(f"❌ Deleting {person}'s upcoming check in at {checkin.prettyNoName()}.")
+        if person != user:
+            person.send(f"{user} deleted your upcoming check in at {checkin.prettyNoName()}.")
+        checkin.scratch()
+        return True
+
+    else:
+        return False
+    
 def handleMessage(user: Person, inMsg, nlp):
     msg = cleanMsg(inMsg)
     print(f"{user.name} IN:", msg)
@@ -175,7 +196,7 @@ def handleMessage(user: Person, inMsg, nlp):
         print("in general keyword search")
         refdPlaces = set()
         refdPeople = set()
-        checkOut = False
+        doCheckOut = False
         personGiven = False
         bestNLPtype = None
 
@@ -191,7 +212,7 @@ def handleMessage(user: Person, inMsg, nlp):
 
             if word in TRIGGERS["checkout"]:
                 print("checkout word detected")
-                checkOut = True
+                doCheckOut = True
                 continue
 
             if word in TRIGGERS["first_person"]:
@@ -221,7 +242,7 @@ def handleMessage(user: Person, inMsg, nlp):
 
         elif len(refdPlaces) == 0:
             print("no places referenced")
-            if checkOut:
+            if doCheckOut:
                 sentMsg = False
                 if len(refdPeople) == 0:
                     refdPeople.add(user)
@@ -229,22 +250,17 @@ def handleMessage(user: Person, inMsg, nlp):
                 for person in refdPeople:
                     checkIns = CheckIn.objects.filter(person = person)
                     for checkin in checkIns:
-                        print(checkin)
-
-                        if checkin.is_fresh():
-                            user.send(f"Checking {person} out of {checkin.place} 💨")
-                            if person != user:
-                                person.send(f"{user} checked you out of {checkin.place} 💨")
-                            checkin.scratch()
-                            sentMsg = True
+                        sentMsg = checkout(checkin, user, person)
 
                     sendForPerson(user, person)
 
                 if not sentMsg:
                     user.send("💡 To delete someone's planned check in, specify the place they're no longer going to.")
+            
             elif len(refdPeople) != 0:
                 for person in refdPeople:
                     sendForPerson(user, person)
+
             else:
                 if bestNLPtype is None:
                     sendIncomprehension(user, inMsg)
@@ -256,25 +272,14 @@ def handleMessage(user: Person, inMsg, nlp):
             if len(refdPeople) == 0:
                 refdPeople.add(user)
 
-            if checkOut:
+            if doCheckOut:
 
                 print("checking out")
                 for person in refdPeople:
-
                     checkIns = CheckIn.objects.filter(person = person, place = place)
+
                     for checkin in checkIns:
-
-                        if checkin.is_future_fresh():
-                            user.send(f"❌ Deleting {person}'s upcoming check in at {checkin.prettyNoName()}.")
-                            if person != user:
-                                person.send(f"{user} deleted your upcoming check in at {checkin.prettyNoName()}.")
-                            checkin.scratch()
-
-                        elif checkin.is_fresh():
-                            user.send(f"Checking {person} out of {place} 💨")
-                            if person != user:
-                                person.send(f"{user} checked you out of {place} 💨")
-                            checkin.scratch()
+                        checkout(checkin, user, person)
 
                     sendForPerson(user, person)
 
@@ -318,15 +323,9 @@ def handleMessage(user: Person, inMsg, nlp):
         user.send(random.choice(DIALOG["long_msg"]))
 
 
-# NICKNAMES = {
-#     "Grace Zheng": "Grass"
-# }
-
 def getProfileFromPSID(psid):
     endpoint = f"https://graph.facebook.com/{psid}?fields=first_name,name,profile_pic&access_token={FB_ACCESS_TOKEN}"
     r = requests.get(endpoint)
     response = json.loads(r.text)
     print(response)
-    # if response["name"] in NICKNAMES:
-    #     response["first_name"] = NICKNAMES[response["name"]]
     return response
