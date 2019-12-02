@@ -3,14 +3,14 @@ import requests
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from .utils import two_hrs_later, is_later_than_now
+from .utils import two_hrs_later, is_later_than_now, cleanMsg
 from .tokens import FB_ACCESS_TOKEN
-
 
 class Person(models.Model):
     name = models.CharField(max_length=25)
     facebook_id = models.CharField(max_length=100, null=True, blank=True)
     facebook_photo = models.URLField(blank=True, null=True, max_length=500)
+    nicknames = models.TextField(blank=True, null=True)
     state = models.CharField(max_length=25, null=True, blank=True)
     last_state_change = models.DateTimeField(auto_now=True, null=True, blank=True)
 
@@ -40,22 +40,25 @@ class Person(models.Model):
                 checkIn.delete()
             elif checkIn == newCheckIn:
                 continue
+            elif checkIn.touches(newCheckIn, assertActive = True):
+                if checkIn.place == newCheckIn.place:
+                    print(f"merging touching checkins: {checkIn} and {newCheckIn}")
+                    if verbose:
+                        self.send(f"Merging {self.name}'s check ins at {checkIn.prettyNoName()} "
+                                    f"and {newCheckIn.prettyNoName()}.")
+                    newCheckIn.start_time = min(newCheckIn.start_time, checkIn.start_time)
+                    newCheckIn.end_time = max(newCheckIn.end_time, checkIn.end_time)
+                    newCheckIn.clean()
+                    newCheckIn.save()
+                    checkIn.delete()
+                else:
+                    print("two checkins touching, letting it pass")
             elif checkIn.overlaps(newCheckIn):
                 print(f"deleting overlapping checkin: {checkIn}")
                 if verbose:
                     self.send(f"Checking {self.name} out from {checkIn.prettyNoName()} "
                             f"because this overlaps with {newCheckIn.prettyNoName()}.")
                 checkIn.scratch()
-            elif checkIn.touches(newCheckIn):
-                print(f"merging touching checkins: {checkIn} and {newCheckIn}")
-                if verbose:
-                    self.send(f"Merging {self.name}'s check ins at {checkIn.prettyNoName()} "
-                                f"and {newCheckIn.prettyNoName()}.")
-                newCheckIn.start_time = min(newCheckIn.start_time, checkIn.start_time)
-                newCheckIn.end_time = max(newCheckIn.end_time, checkIn.end_time)
-                newCheckIn.clean()
-                newCheckIn.save()
-                checkIn.delete()
 
     def send(self, outMsg, msgType = "RESPONSE", quick_replies = None):
         print("OUT:", outMsg)
@@ -125,6 +128,7 @@ class Place(models.Model):
         default="grey lighten-5"
     )
     photo = models.URLField(blank=True, null=True)
+    aliases = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -217,7 +221,10 @@ class CheckIn(models.Model):
     def overlaps(self, other) -> bool:
         return self.start_time < other.end_time and self.end_time > other.start_time
 
-    def touches(self, other) -> bool:
+    def touches(self, other, assertActive = False) -> bool:
+        if (self.scratched or other.scratched) and assertActive:
+            return False
+
         minTimeGap = min(
             (self.end_time - other.start_time).total_seconds(),
             (other.end_time - self.start_time).total_seconds(),
@@ -236,3 +243,15 @@ class CheckIn(models.Model):
             raise ValidationError("Check in duration is too long")
         if self.start_time - timezone.now() > timezone.timedelta(hours=18):
             raise ValidationError("Start date is too far in the future")
+
+
+def getOrCreatePersonByName(name):
+    name = cleanMsg(name)
+    if Person.objects.filter(name__istartswith = name).exists():
+        return Person.objects.filter(name__istartswith = name).first()
+    elif Person.objects.filter(nicknames__icontains = name).exists():
+        return Person.objects.filter(nicknames__icontains = name).first()
+    else:
+        person = Person(name = name)
+        person.save()
+        return Person

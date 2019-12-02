@@ -4,6 +4,7 @@ import random
 
 from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
+from .utils import cleanMsg
 
 from django.core.exceptions import ValidationError
 from .utils import nlpParseTime, two_hrs_later, getBestEntityFromSubset
@@ -12,7 +13,7 @@ from django.utils import timezone
 TRIGGERS = {
     "everybody": ["everyone", "everybody", "people"],
     "locations": ["locations", "places"],
-    "leaderboard": ["leaderboard", "leader board", "score", "scoreboard", "scores"],
+    "leaderboard": ["leaderboard", "leader board", "score", "scoreboard", "scores", "top"],
     "first_person": ["i", "me", "im", "imma", "ill"],
     "short_word_exceptions": ["ed", "i", "me", "im"],
     "checkout": ["wont", "not", "leaving", "leave", "out", "bounce", "bouncing", "left"],
@@ -57,9 +58,6 @@ DIALOG = {
     ]
 
 }
-
-def cleanMsg(msg):
-    return ''.join(char.lower() for char in msg if char.isalnum() or char in " ")
 
 def isSubstringFor(string: str, arrOfSubstrings):
     for substr in arrOfSubstrings:
@@ -152,6 +150,8 @@ def makeNewCheckIn(user, person, place, start_time, end_time):
         newCheckIn.save()
         person.cleanCheckIns(newCheckIn, verbose=True)
         user.send(f"✔️ I've checked {person} in for {newCheckIn.prettyNoName()}.")
+        if person != user:
+            person.send(f"✔️ {user} checked you in for {newCheckIn.prettyNoName()}.")
 
     except ValidationError as e:
         user.send(e.message)
@@ -200,13 +200,15 @@ def handleMessage(user: Person, inMsg, nlp):
                 personGiven = True
                 continue
 
-            placeQ = Place.objects.filter(name__istartswith = word)
-            personQ = Person.objects.filter(name__istartswith = word.strip("s"))
+            placeQ = Place.objects.filter(name__istartswith = word) | Place.objects.filter(aliases__icontains = word)
+            personQ = Person.objects.filter(name__istartswith = word.strip('s')) | Person.objects.filter(nicknames__icontains = word.strip('s'))
 
             if placeQ.exists():
+                print(placeQ.first())
                 refdPlaces.add(placeQ.first())
 
             elif personQ.exists():
+                print(personQ.first())
                 refdPeople.add(personQ.first())
                 personGiven = True
 
@@ -229,8 +231,11 @@ def handleMessage(user: Person, inMsg, nlp):
                     checkIns = CheckIn.objects.filter(person = person)
                     for checkin in checkIns:
                         print(checkin)
+
                         if checkin.is_fresh():
                             user.send(f"Checking {person} out of {checkin.place} 💨")
+                            if person != user:
+                                person.send(f"{user} checked you out of {checkin.place} 💨")
                             checkin.scratch()
                             sentMsg = True
 
@@ -253,16 +258,25 @@ def handleMessage(user: Person, inMsg, nlp):
                 refdPeople.add(user)
 
             if checkOut:
+
                 print("checking out")
                 for person in refdPeople:
+
                     checkIns = CheckIn.objects.filter(person = person, place = place)
                     for checkin in checkIns:
+
                         if checkin.is_future_fresh():
-                            user.send(f"❌ Deleting {person}'s future check in at {checkin.prettyNoName()}.")
+                            user.send(f"❌ Deleting {person}'s upcoming check in at {checkin.prettyNoName()}.")
+                            if person != user:
+                                person.send(f"{user} deleted your upcoming check in at {checkin.prettyNoName()}.")
                             checkin.scratch()
+
                         elif checkin.is_fresh():
                             user.send(f"Checking {person} out of {place} 💨")
+                            if person != user:
+                                person.send(f"{user} checked you out of {place} 💨")
                             checkin.scratch()
+
                     sendForPerson(user, person)
 
             else:
@@ -305,15 +319,15 @@ def handleMessage(user: Person, inMsg, nlp):
         user.send(random.choice(DIALOG["long_msg"]))
 
 
-NICKNAMES = {
-    "Grace Zheng": "Grass"
-}
+# NICKNAMES = {
+#     "Grace Zheng": "Grass"
+# }
 
 def getProfileFromPSID(psid):
     endpoint = f"https://graph.facebook.com/{psid}?fields=first_name,name,profile_pic&access_token={FB_ACCESS_TOKEN}"
     r = requests.get(endpoint)
     response = json.loads(r.text)
     print(response)
-    if response["name"] in NICKNAMES:
-        response["first_name"] = NICKNAMES[response["name"]]
+    # if response["name"] in NICKNAMES:
+    #     response["first_name"] = NICKNAMES[response["name"]]
     return response

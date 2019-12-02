@@ -2,6 +2,9 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
+def cleanMsg(msg):
+    return ''.join(char.lower() for char in msg if char.isalnum() or char in " ")
+
 def two_hrs_later(start = None):
     if start == None:
         start = timezone.now()
