@@ -4,11 +4,11 @@ import random
 
 from .models import Place, CheckIn, Person
 from .tokens import FB_ACCESS_TOKEN
-from .utils import cleanMsg
+from .utils import cleanMsg, nlpParseTime, two_hrs_later, getBestEntityFromSubset
 
 from django.core.exceptions import ValidationError
-from .utils import nlpParseTime, two_hrs_later, getBestEntityFromSubset
 from django.utils import timezone
+from django.db.models import Count
 
 TRIGGERS = {
     "everybody": ["everyone", "everybody", "people", "checked in"],
@@ -92,7 +92,8 @@ def sendForPlace(user, place):
         user.send("\n".join(checkin.prettyNoPlace() for checkin in futureCheckIns))
 
     elif len(freshCheckIns) == 0 and len(futureCheckIns) == 0:
-        user.send(f"Nobody's checked into {place.name}.")
+        user.send(f"Nobody's checked into {place.name}.",
+        quick_replies=[f"I'm in {place}"])
 
 def sendForPerson(user, person):
     checkins = person.checkin_set.all()
@@ -119,7 +120,8 @@ def sendAllCheckIns(user):
 def sendIncomprehension(user, origMsg):
     user.send(f"You said, '{origMsg}'. {random.choice(DIALOG['incomprehension'])}")
     user.send("💡 Try saying, 'locations', 'who's in Cam', 'where's Jiayi', 'I'll be in ECHA in 5', or something like that.")
-    user.send("You can send suggestions to https://github.com/jtang9001/cameron-django/issues. Thanks!")
+    user.send("You can send suggestions to https://github.com/jtang9001/cameron-django/issues. Thanks!",
+              quick_replies=["Locations", "Who's in Cam?", "Where's Jiayi?", "Leaderboard"])
 
 def sendLeaderboard(user):
     people = Person.objects.all()
@@ -134,8 +136,12 @@ def sendLeaderboard(user):
     user.send("\n".join(peopleStrs))
 
 def sendAllLocations(user):
-    user.send("You can check into all of the following places. Ask the real Jiayi to add more places.")
-    user.send(", ".join((place.name for place in Place.objects.all())))
+    user.send("You can check into all of the following places. Request new places at https://github.com/jtang9001/cameron-django/issues.")
+    user.send(
+        ", ".join( (place.name for place in Place.objects.all()) ),
+        quick_replies=[f"I'm in {place.name}" for place in Place.objects.filter(
+            ).annotate(checkin_count=Count("checkin")).order_by('-checkin_count')[:5]]
+    )
 
 def makeNewCheckIn(user, person, place, start_time, end_time):
     try:
