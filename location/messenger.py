@@ -41,7 +41,7 @@ class QuickReplyArray:
         return [qr.getDict() for qr in self.qrs]
 
 TRIGGERS = {
-    "everybody": ["everyone", "everybody", "people", "checked in", "here"],
+    "everybody": ["everyone", "everybody", "people", "checked in"],
     "locations": ["locations", "places"],
     "leaderboard": ["leaderboard", "leader board", "score", "scoreboard", "scores", "top"],
     "first_person": ["i", "me", "im", "imma", "ill"],
@@ -107,7 +107,7 @@ def removeSubstrings(string: str, arrOfSubstrings):
     return string.strip()
 
 
-def sendForPlace(user, place):
+def sendForPlace(user, place, quick_replies = None):
     print(place)
 
     checkins = CheckIn.objects.filter(place = place)
@@ -116,15 +116,17 @@ def sendForPlace(user, place):
 
     if len(freshCheckIns) > 0:
         user.send(f"Here's who's in {place.name}:")
-        user.send("\n".join(checkin.prettyNoPlace() for checkin in freshCheckIns))
+        user.send("\n".join(checkin.prettyNoPlace() for checkin in freshCheckIns), 
+            quick_replies=quick_replies)
 
     if len(futureCheckIns) > 0:
         user.send(f"Here's who will be in {place.name}:")
-        user.send("\n".join(checkin.prettyNoPlace() for checkin in futureCheckIns))
+        user.send("\n".join(checkin.prettyNoPlace() for checkin in futureCheckIns),
+            quick_replies=quick_replies)
 
     elif len(freshCheckIns) == 0 and len(futureCheckIns) == 0:
         user.send(f"Nobody's checked into {place.name}.",
-                quick_replies=QuickReplyArray([f"I'm in {place}"]))
+            quick_replies=QuickReplyArray([f"I'm in {place}"]))
 
 
 def sendForPerson(user, person):
@@ -201,11 +203,7 @@ def makeNewCheckIn(user, person, place, start_time, end_time):
         newCheckIn.save()
         person.cleanCheckIns(newCheckIn, verbose=True)
 
-        dispName = "you" if person == user else person
-        qrDispName = "I'm" if person == user else f"{person} is"
-
-        user.send(f"✔️ I've checked {dispName} in for {newCheckIn.prettyNoName()}.",
-            quick_replies=QuickReplyArray([f"{qrDispName} leaving"]))
+        user.send(f"✔️ I've checked {'you' if person == user else person} in for {newCheckIn.prettyNoName()}.")
         if person != user:
             person.send(f"✔️ {user} checked you in for {newCheckIn.prettyNoName()}.",
                 quick_replies=QuickReplyArray(["I'm leaving"]))
@@ -373,8 +371,20 @@ def handleMessage(user: Person, inMsg, nlp):
                             else:
                                 makeNewCheckIn(user, person, place, start_time, end_time)
 
+                if len(refdPeople) == 1 and user in refdPeople:
+                    qrs = [QuickReply("I'm leaving")]
+                elif len(refdPeople) > 1 and user in refdPeople:
+                    qrs = [QuickReply("We're leaving", payload=f"{' '.join(refdPeople)} leaving")]
+                    qrs += [QuickReply(f"{person} left") for person in refdPeople]
+                elif len(refdPeople) == 1 and user not in refdPeople:
+                    qrs = [QuickReply(f"{next(iter(refdPeople))} left")]
+                elif len(refdPeople) > 1 and user not in refdPeople:
+                    qrs = [QuickReply("They're leaving", payload=f"{' '.join(refdPeople)} leaving")]
+                    qrs += [QuickReply(f"{person} left") for person in refdPeople]
 
-                sendForPlace(user, place)
+
+                sendForPlace(user, place, 
+                    quick_replies=QuickReplyArray(qrs))
 
         if bestNLPtype == "bye" or bestNLPtype == "thanks":
             user.send(random.choice(DIALOG[bestNLPtype]))
