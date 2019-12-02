@@ -374,14 +374,15 @@ def handleMessage(user: Person, inMsg, nlp):
                 if len(refdPeople) == 1 and user in refdPeople:
                     qrs = [QuickReply("I'm leaving")]
                 elif len(refdPeople) > 1 and user in refdPeople:
-                    qrs = [QuickReply("We're leaving", payload=f"{' '.join(refdPeople)} leaving")]
+                    qrs = [QuickReply("We're leaving", 
+                        payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
                     qrs += [QuickReply(f"{person} left") for person in refdPeople]
                 elif len(refdPeople) == 1 and user not in refdPeople:
                     qrs = [QuickReply(f"{next(iter(refdPeople))} left")]
                 elif len(refdPeople) > 1 and user not in refdPeople:
-                    qrs = [QuickReply("They're leaving", payload=f"{' '.join(refdPeople)} leaving")]
+                    qrs = [QuickReply("They're leaving", 
+                        payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
                     qrs += [QuickReply(f"{person} left") for person in refdPeople]
-
 
                 sendForPlace(user, place, 
                     quick_replies=QuickReplyArray(qrs))
