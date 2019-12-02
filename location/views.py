@@ -138,7 +138,10 @@ def messenger(request):
                     user.facebook_photo = fbProfile["profile_pic"]
                     user.save()
 
-                    msg = message['message']['text']
+                    if "quick_reply" in message["message"]:
+                        msg = message["message"]["quick_reply"]["payload"]
+                    else: 
+                        msg = message['message']['text']
                     nlp = message['message']['nlp']
                     print(nlp)
 

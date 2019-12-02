@@ -10,8 +10,38 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.db.models import Count
 
+class QuickReply:
+    def __init__(self, text, payload = None, img = None):
+        self.text = text
+        self.payload = text if payload is None else payload
+        self.img = img
+    
+    def getDict(self):
+        returnDict = {
+            "content_type": "text",
+            "title": self.text,
+            "payload": self.payload
+        }
+
+        if self.img is not None:
+            returnDict["image_url"] = self.img
+
+        return returnDict
+
+class QuickReplyArray:
+    def __init__(self, arr):
+        self.qrs = []
+        for item in arr:
+            if isinstance(item, QuickReply):
+                self.qrs.append(item)
+            else:
+                self.qrs.append(QuickReply(str(item)))
+    
+    def getList(self):
+        return [qr.getDict() for qr in self.qrs]
+
 TRIGGERS = {
-    "everybody": ["everyone", "everybody", "people", "checked in"],
+    "everybody": ["everyone", "everybody", "people", "checked in", "here"],
     "locations": ["locations", "places"],
     "leaderboard": ["leaderboard", "leader board", "score", "scoreboard", "scores", "top"],
     "first_person": ["i", "me", "im", "imma", "ill"],
@@ -76,6 +106,7 @@ def removeSubstrings(string: str, arrOfSubstrings):
         string = string.replace(substr, "")
     return string.strip()
 
+
 def sendForPlace(user, place):
     print(place)
 
@@ -93,7 +124,8 @@ def sendForPlace(user, place):
 
     elif len(freshCheckIns) == 0 and len(futureCheckIns) == 0:
         user.send(f"Nobody's checked into {place.name}.",
-        quick_replies=[f"I'm in {place}"])
+        quick_replies=QuickReplyArray([f"I'm in {place}"]))
+
 
 def sendForPerson(user, person):
     checkins = person.checkin_set.all()
@@ -107,6 +139,7 @@ def sendForPerson(user, person):
     else:
         user.send(f"{person.name} isn't checked in anywhere")
 
+
 def sendAllCheckIns(user):
     user.send("Here's everyone that checked in:")
     sentReply = False
@@ -117,11 +150,20 @@ def sendAllCheckIns(user):
     if not sentReply:
         user.send("Nobody's checked in anywhere 😞")
 
+
 def sendIncomprehension(user, origMsg):
+    randomPerson = random.choice(Person.objects.filter(facebook_photo__isnull=False))
     user.send(f"You said, '{origMsg}'. {random.choice(DIALOG['incomprehension'])}")
     user.send("💡 Try saying, 'locations', 'who's in Cam', 'where's Jiayi', 'I'll be in ECHA in 5', or something like that.")
     user.send("You can send suggestions to https://github.com/jtang9001/cameron-django/issues. Thanks!",
-              quick_replies=["Locations", "Who's in Cam?", "Where's Jiayi?", "Leaderboard"])
+        quick_replies=QuickReplyArray([
+            "Locations", 
+            f"Who's in {random.choice(Place.objects.all())}?", 
+            QuickReply(f"Where's {randomPerson}?", img=randomPerson.facebook_photo), 
+            "Leaderboard"
+        ])
+    )
+
 
 def sendLeaderboard(user):
     people = Person.objects.all()
@@ -135,13 +177,17 @@ def sendLeaderboard(user):
 
     user.send("\n".join(peopleStrs))
 
+
 def sendAllLocations(user):
     user.send("You can check into all of the following places. Request new places at https://github.com/jtang9001/cameron-django/issues.")
     user.send(
         ", ".join( (place.name for place in Place.objects.all()) ),
-        quick_replies=[f"I'm in {place.name}" for place in Place.objects.filter(
+        quick_replies=QuickReplyArray(
+            [f"I'm in {place.name}" for place in Place.objects.filter(
             ).annotate(checkin_count=Count("checkin")).order_by('-checkin_count')[:5]]
+        )
     )
+
 
 def makeNewCheckIn(user, person, place, start_time, end_time):
     try:
@@ -164,6 +210,7 @@ def makeNewCheckIn(user, person, place, start_time, end_time):
     except Exception as e:
         user.send(repr(e))
 
+
 def checkout(checkin, user, person):
     #returns if a message was sent or not
     print(checkin)
@@ -184,7 +231,8 @@ def checkout(checkin, user, person):
 
     else:
         return False
-    
+
+
 def handleMessage(user: Person, inMsg, nlp):
     msg = cleanMsg(inMsg)
     print(f"{user.name} IN:", msg)

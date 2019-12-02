@@ -28,7 +28,6 @@ class Person(models.Model):
 
     def hasRelevantCheckIns(self):
         for checkin in self.checkin_set.all():
-            print(checkin)
             if checkin.is_fresh() or checkin.is_future_fresh():
                 return True
         return False
@@ -69,10 +68,7 @@ class Person(models.Model):
         else:
             msgDict = {
                 "text": outMsg,
-                "quick_replies": [{
-                    "content_type": "text",
-                    "title": item,
-                    "payload": item} for item in quick_replies]
+                "quick_replies": quick_replies.getList()
             }
 
         response_msg = json.dumps(
