@@ -200,8 +200,12 @@ def makeNewCheckIn(user, person, place, start_time, end_time):
         newCheckIn.clean()
         newCheckIn.save()
         person.cleanCheckIns(newCheckIn, verbose=True)
-        user.send(f"✔️ I've checked {person} in for {newCheckIn.prettyNoName()}.",
-            quick_replies=QuickReplyArray([f"{person if person != user else 'I\'m'} leaving"]))
+
+        dispName = "you" if person == user else person
+        qrDispName = "I'm" if person == user else f"{person} is"
+
+        user.send(f"✔️ I've checked {dispName} in for {newCheckIn.prettyNoName()}.",
+            quick_replies=QuickReplyArray([f"{qrDispName} leaving"]))
         if person != user:
             person.send(f"✔️ {user} checked you in for {newCheckIn.prettyNoName()}.",
                 quick_replies=QuickReplyArray(["I'm leaving"]))
