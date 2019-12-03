@@ -1,5 +1,6 @@
 import json
 import requests
+import time
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
@@ -86,12 +87,14 @@ class Person(models.Model):
                 headers={"Content-Type": "application/json"},
                 data=response_msg
             )
-            
+
             print(status.json())
             attempts += 1
 
             if 'message_id' in status.json():
                 break
+            else:
+                time.sleep(0.5)
 
     def getScore(self):
         try:
