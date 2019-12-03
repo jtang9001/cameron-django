@@ -62,7 +62,7 @@ class Person(models.Model):
     def send(self, outMsg, msgType = "RESPONSE", quick_replies = None):
         print("OUT:", outMsg)
         endpoint = f"https://graph.facebook.com/v5.0/me/messages?access_token={FB_ACCESS_TOKEN}"
-        
+
         if quick_replies is None:
             msgDict = {"text": outMsg}
         else:
@@ -244,7 +244,7 @@ class CheckIn(models.Model):
 def getOrCreatePerson(name = None, fbid = None):
     if fbid is not None and Person.objects.filter(facebook_id__exact = fbid).exists():
         return Person.objects.get(facebook_id__exact = fbid)
-    
+
     name = cleanMsg(name)
     if Person.objects.filter(name__istartswith = name).exists():
         return Person.objects.filter(name__istartswith = name).first()
@@ -257,6 +257,6 @@ def getOrCreatePerson(name = None, fbid = None):
 
 def getPersonWithPossibleS(name: str):
     if name.endswith('s'):
-        name = name[:-2]
+        name = name[:-1]
     return Person.objects.filter(name__istartswith = name) | Person.objects.filter(nicknames__icontains = name)
 
