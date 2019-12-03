@@ -226,7 +226,7 @@ def checkout(checkin, user, person, allowFuture = False):
                 f"{user} checked you out of {checkin.place} 💨",
                 quick_replies=QuickReplyArray([QuickReply(
                     "Undo",
-                    payload=f"{person} in {checkin.place} until {timezone.localtime(checkin.end_time.strftime('%H:%M'))}"
+                    payload=f"{person} in {checkin.place} until {timezone.localtime(checkin.end_time).strftime('%H:%M')}"
                 )])
             )
         checkin.scratch()
@@ -239,7 +239,7 @@ def checkout(checkin, user, person, allowFuture = False):
                 f"{user} deleted your upcoming check in at {checkin.prettyNoName()}.",
                 quick_replies=QuickReplyArray([QuickReply(
                     "Undo",
-                    payload=f"{person} in {checkin.place} from {timezone.localtime(checkin.start_time.strftime('%H:%M'))} to {timezone.localtime(checkin.end_time.strftime('%H:%M'))}"
+                    payload=f"{person} in {checkin.place} from {timezone.localtime(checkin.start_time).strftime('%H:%M')} to {timezone.localtime(checkin.end_time).strftime('%H:%M')}"
                 )])
             )
         checkin.scratch()
