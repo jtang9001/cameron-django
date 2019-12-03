@@ -375,7 +375,7 @@ def handleMessage(user: Person, inMsg, nlp):
                     else:
                         start_time = timezone.now()
                         end_time = two_hrs_later()
-                        user.send(f"I'm assuming a duration of 2 hours for this check in since no end time was given. You can specify an end time (ex. 'I'm in {place} till 4') to overwrite this.")
+                        user.send(f"I'm assuming a duration of 2 hours for this check in since no end time was given. You can specify an end time to overwrite this.")
                         for person in refdPeople:
                             for checkin in CheckIn.objects.filter(person = person, place = place):
                                 if checkin.is_fresh():
@@ -387,8 +387,8 @@ def handleMessage(user: Person, inMsg, nlp):
                         
                         qrs = [
                             QuickReply(
-                                f"Until {(start_time + timezone.timedelta(minutes = mins)).strftime('%H:%M')}",
-                                payload=f"{' '.join((person.name for person in refdPeople))} in {place} until {(start_time + timezone.timedelta(minutes = mins)).strftime('%H:%M')}"
+                                f"Until {(timezone.localtime(start_time + timezone.timedelta(minutes = mins))).strftime('%H:%M')}",
+                                payload=f"{' '.join((person.name for person in refdPeople))} in {place} until {(timezone.localtime(start_time + timezone.timedelta(minutes = mins))).strftime('%H:%M')}"
                             )
                             for mins in range(30, 241, 30)
                         ]
