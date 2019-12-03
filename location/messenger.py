@@ -143,14 +143,16 @@ def sendForPerson(user, person, quick_replies = None):
 
 
 def sendAllCheckIns(user):
-    user.send("Here's everyone that checked in:")
     sentReply = False
     for place in Place.objects.all():
         if place.hasRelevantCheckIns():
             sendForPlace(user, place)
             sentReply = True
     if not sentReply:
-        user.send("Nobody's checked in anywhere 😞")
+        user.send(
+            "Nobody's checked in anywhere 😞",
+            quick_replies=QuickReplyArray(["😠", "😤", "😭", "😲", "😒"])
+        )
 
 
 def sendIncomprehension(user, origMsg):

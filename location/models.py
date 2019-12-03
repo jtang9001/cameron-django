@@ -60,32 +60,38 @@ class Person(models.Model):
                 checkIn.scratch()
 
     def send(self, outMsg, msgType = "RESPONSE", quick_replies = None):
-        print("OUT:", outMsg)
-        endpoint = f"https://graph.facebook.com/v5.0/me/messages?access_token={FB_ACCESS_TOKEN}"
+        attempts = 0
+        while attempts < 3:
+            print("OUT:", outMsg)
+            endpoint = f"https://graph.facebook.com/v5.0/me/messages?access_token={FB_ACCESS_TOKEN}"
 
-        if quick_replies is None:
-            msgDict = {"text": outMsg}
-        else:
-            msgDict = {
-                "text": outMsg,
-                "quick_replies": quick_replies.getList()
-            }
+            if quick_replies is None:
+                msgDict = {"text": outMsg}
+            else:
+                msgDict = {
+                    "text": outMsg,
+                    "quick_replies": quick_replies.getList()
+                }
 
-        response_msg = json.dumps(
-            {
-                "messaging_type": msgType,
-                "recipient": {"id": self.facebook_id},
-                "message": msgDict
-            }
-        )
+            response_msg = json.dumps(
+                {
+                    "messaging_type": msgType,
+                    "recipient": {"id": self.facebook_id},
+                    "message": msgDict
+                }
+            )
 
-        status = requests.post(
-            endpoint,
-            headers={"Content-Type": "application/json"},
-            data=response_msg
-        )
+            status = requests.post(
+                endpoint,
+                headers={"Content-Type": "application/json"},
+                data=response_msg
+            )
+            
+            if 'message_id' in status:
+                break
 
-        print(status.json())
+            print(status.json())
+            attempts += 1
 
     def getScore(self):
         try:
