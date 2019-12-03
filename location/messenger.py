@@ -2,7 +2,7 @@ import requests
 import json
 import random
 
-from .models import Place, CheckIn, Person
+from .models import Place, CheckIn, Person, getPersonWithPossibleS
 from .tokens import FB_ACCESS_TOKEN
 from .utils import cleanMsg, nlpParseTime, two_hrs_later, getBestEntityFromSubset
 
@@ -215,7 +215,7 @@ def makeNewCheckIn(user, person, place, start_time, end_time):
         user.send(repr(e))
 
 
-def checkout(checkin, user, person):
+def checkout(checkin, user, person, allowFuture = False):
     #returns if a message was sent or not
     print(checkin)
 
@@ -226,7 +226,7 @@ def checkout(checkin, user, person):
         checkin.scratch()
         return True
 
-    elif checkin.is_future_fresh():
+    elif allowFuture and checkin.is_future_fresh():
         user.send(f"❌ Deleting {person}'s upcoming check in at {checkin.prettyNoName()}.")
         if person != user:
             person.send(f"{user} deleted your upcoming check in at {checkin.prettyNoName()}.")
@@ -279,7 +279,7 @@ def handleMessage(user: Person, inMsg, nlp):
                 continue
 
             placeQ = Place.objects.filter(name__istartswith = word) | Place.objects.filter(aliases__icontains = word)
-            personQ = Person.objects.filter(name__istartswith = word.strip('s')) | Person.objects.filter(nicknames__icontains = word.strip('s'))
+            personQ = getPersonWithPossibleS(name = word)
 
             if placeQ.exists():
                 print(placeQ.first())
@@ -308,7 +308,7 @@ def handleMessage(user: Person, inMsg, nlp):
                 for person in refdPeople:
                     checkIns = CheckIn.objects.filter(person = person)
                     for checkin in checkIns:
-                        sentMsg = checkout(checkin, user, person)
+                        sentMsg = checkout(checkin, user, person, allowFuture=False)
 
                     sendForPerson(user, person)
 
