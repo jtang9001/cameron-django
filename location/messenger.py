@@ -222,41 +222,40 @@ def checkout(checkin, user, person, allowFuture = False):
 
     if checkin.is_fresh():
         user.send(
-            f"Checking {person} out of {checkin.place} 💨", 
-            quick_replies=QuickReplyArray([QuickReply(
-                "Undo",
-                payload=f"{person} in {checkin.place} until {timezone.localtime(checkin.end_time).strftime('%H:%M')}"
-            )])
+            f"Checking {'you' if person == user else person} out of {checkin.place} 💨"
         )
         if person != user:
             person.send(
                 f"{user} checked you out of {checkin.place} 💨",
                 quick_replies=QuickReplyArray([QuickReply(
                     "Undo",
-                    payload=f"{person} in {checkin.place} until {timezone.localtime(checkin.end_time).strftime('%H:%M')}"
+                    payload=f"{person} in {checkin.place} until {checkin.prettyTime()}"
                 )])
             )
         checkin.scratch()
-        return checkin
+        return QuickReplyArray([QuickReply(
+            f"Undo for {person}",
+            payload=f"{person} in {checkin.place} {checkin.prettyTime()}"
+        )])
 
     elif allowFuture and checkin.is_future_fresh():
+        dispName = 'your' if person == user else person.name + '\'s'
         user.send(
-            f"❌ Deleting {person}'s upcoming check in at {checkin.prettyNoName()}.",
-            quick_replies=QuickReplyArray([QuickReply(
-                "Undo",
-                payload=f"{person} in {checkin.place} from {timezone.localtime(checkin.start_time).strftime('%H:%M')} to {timezone.localtime(checkin.end_time).strftime('%H:%M')}"
-            )])
+            f"❌ Deleting {dispName} upcoming check in at {checkin.prettyNoName()}."
         )
         if person != user:
             person.send(
                 f"{user} deleted your upcoming check in at {checkin.prettyNoName()}.",
                 quick_replies=QuickReplyArray([QuickReply(
                     "Undo",
-                    payload=f"{person} in {checkin.place} from {timezone.localtime(checkin.start_time).strftime('%H:%M')} to {timezone.localtime(checkin.end_time).strftime('%H:%M')}"
+                    payload=f"{person} in {checkin.place} {checkin.prettyTime()}"
                 )])
             )
         checkin.scratch()
-        return checkin
+        return QuickReplyArray([QuickReply(
+            f"Undo for {person}",
+            payload=f"{person} in {checkin.place} {checkin.prettyTime()}"
+        )])
 
     else:
         return None
@@ -325,18 +324,20 @@ def handleMessage(user: Person, inMsg, nlp):
         elif len(refdPlaces) == 0:
             print("no places referenced")
             if doCheckOut:
-                checkedOut = []
+                
+                sendQr = None
+
                 if len(refdPeople) == 0:
                     refdPeople.add(user)
 
                 for person in refdPeople:
                     checkIns = CheckIn.objects.filter(person = person)
                     for checkin in checkIns:
-                        newCheckout = checkout(checkin, user, person, allowFuture=False)
-                        if newCheckout is not None:
-                            checkedOut.append(newCheckout)
+                        qr = checkout(checkin, user, person, allowFuture=False)
+                        if qr is not None:
+                            sendQr = qr
 
-                    sendForPerson(user, person)
+                    sendForPerson(user, person, quick_replies=sendQr)
 
                 if len(checkedOut) == 0:
                     user.send("💡 To delete someone's planned check in, specify the place they're no longer going to.")
@@ -358,18 +359,18 @@ def handleMessage(user: Person, inMsg, nlp):
 
             if doCheckOut:
 
-                checkedOut = []
+                sendQr = None
 
                 print("checking out")
                 for person in refdPeople:
                     checkIns = CheckIn.objects.filter(person = person, place = place)
 
                     for checkin in checkIns:
-                        newCheckOut = checkout(checkin, user, person)
-                        if newCheckOut is not None:
-                            checkedOut.append(newCheckOut)
+                        qr = checkout(checkin, user, person)
+                        if qr is not None:
+                            sendQr = qr
 
-                    sendForPerson(user, person)
+                    sendForPerson(user, person, quick_replies=sendQr)
 
             else:
                 entityType, entity = getBestEntityFromSubset(nlp["entities"], ["datetime", "duration"])

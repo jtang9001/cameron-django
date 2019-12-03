@@ -164,28 +164,18 @@ class CheckIn(models.Model):
         return f"{self.person} at {self.place}, {localStart} to {localEnd}"
 
     def prettyNoPlace(self):
-        localStart = timezone.localtime(self.start_time)
-        localEnd = timezone.localtime(self.end_time)
-        if localStart <= timezone.now():
-            return f"{self.person}: until {localEnd.strftime('%H:%M')}"
-        else:
-            return f"{self.person}: {localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
+        return f"{self.person}: {self.prettyTime()}"
 
     def prettyNoName(self):
-        localStart = timezone.localtime(self.start_time)
-        localEnd = timezone.localtime(self.end_time)
-        if localStart <= timezone.now():
-            return f"{self.place}: until {localEnd.strftime('%H:%M')}"
-        else:
-            return f"{self.place}: {localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
+        return f"{self.place}: {self.prettyTime()}"
 
     def prettyTime(self):
         localStart = timezone.localtime(self.start_time)
         localEnd = timezone.localtime(self.end_time)
         if localStart <= timezone.now():
-            return f"Until {localEnd.strftime('%H:%M')}"
+            return f"until {localEnd.strftime('%H:%M')}"
         else:
-            return f"{localStart.strftime('%H:%M')} - {localEnd.strftime('%H:%M')}"
+            return f"from {localStart.strftime('%H:%M')} to {localEnd.strftime('%H:%M')}"
 
     def scratch(self):
         print(f"scratching {self}")
