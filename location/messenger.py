@@ -160,6 +160,7 @@ def sendIncomprehension(user, origMsg):
     user.send("You can send suggestions to https://github.com/jtang9001/cameron-django/issues. Thanks!",
         quick_replies=QuickReplyArray([
             "Locations", 
+            "Who's checked in?",
             f"Who's in {random.choice(Place.objects.all())}?", 
             QuickReply(f"Where's {randomPerson}?", img=randomPerson.facebook_photo), 
             "Leaderboard"
