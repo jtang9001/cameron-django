@@ -254,3 +254,9 @@ def getOrCreatePerson(name = None, fbid = None):
         person = Person(name = name)
         person.save()
         return Person
+
+def getPersonWithPossibleS(name: str):
+    if name.endswith('s'):
+        name = name[:-2]
+    return Person.objects.filter(name__istartswith = name) | Person.objects.filter(nicknames__icontains = name)
+
