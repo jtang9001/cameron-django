@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Place, CheckIn, Person, getOrCreatePersonByName
+from .models import Place, CheckIn, Person, getOrCreatePerson
 from .forms import CheckInForm
 from .tokens import FB_VERIFY_TOKEN
 from .messenger import handleMessage, getProfileFromPSID
@@ -140,7 +140,7 @@ def messenger(request):
 
                     if "quick_reply" in message["message"]:
                         msg = message["message"]["quick_reply"]["payload"]
-                    else: 
+                    else:
                         msg = message['message']['text']
                     nlp = message['message']['nlp']
                     print(nlp)
