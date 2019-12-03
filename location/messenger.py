@@ -375,7 +375,6 @@ def handleMessage(user: Person, inMsg, nlp):
                     else:
                         start_time = timezone.now()
                         end_time = two_hrs_later()
-                        user.send(f"I'm assuming a duration of 2 hours for this check in since no end time was given. You can specify an end time to overwrite this.")
                         for person in refdPeople:
                             for checkin in CheckIn.objects.filter(person = person, place = place):
                                 if checkin.is_fresh():
