@@ -236,7 +236,7 @@ def checkout(checkin, user, person, allowFuture = False):
             )
         checkin.scratch()
         return QuickReplyArray([QuickReply(
-            f"Undo for {person}",
+            f"Check in {person}",
             payload=f"{person} in {checkin.place}",
             img=person.facebook_photo
         )])
@@ -256,7 +256,7 @@ def checkout(checkin, user, person, allowFuture = False):
             )
         checkin.scratch()
         return QuickReplyArray([QuickReply(
-            f"Undo for {person}",
+            f"Check in {person}",
             payload=f"{person} in {checkin.place}",
             img=person.facebook_photo
         )])
