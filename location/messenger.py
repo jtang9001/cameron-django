@@ -372,17 +372,17 @@ def handleMessage(user: Person, inMsg, nlp):
                                 makeNewCheckIn(user, person, place, start_time, end_time)
 
                 if len(refdPeople) == 1 and user in refdPeople:
-                    qrs = [QuickReply("I'm leaving")]
+                    qrs = [QuickReply("I'm leaving", img=user.facebook_photo)]
                 elif len(refdPeople) > 1 and user in refdPeople:
                     qrs = [QuickReply("We're leaving", 
                         payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
-                    qrs += [QuickReply(f"{person} left") for person in refdPeople]
+                    qrs += [QuickReply(f"{person} left", img = person.facebook_photo) for person in refdPeople]
                 elif len(refdPeople) == 1 and user not in refdPeople:
-                    qrs = [QuickReply(f"{next(iter(refdPeople))} left")]
+                    qrs = [QuickReply(f"{next(iter(refdPeople))} left", img = next(iter(refdPeople)).facebook_photo)]
                 elif len(refdPeople) > 1 and user not in refdPeople:
                     qrs = [QuickReply("They're leaving", 
                         payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
-                    qrs += [QuickReply(f"{person} left") for person in refdPeople]
+                    qrs += [QuickReply(f"{person} left", img=person.facebook_photo) for person in refdPeople]
 
                 sendForPlace(user, place, 
                     quick_replies=QuickReplyArray(qrs))
