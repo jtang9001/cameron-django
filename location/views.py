@@ -133,7 +133,7 @@ def messenger(request):
                     userID = message['sender']['id']
                     fbProfile = getProfileFromPSID(userID)
 
-                    user = getOrCreatePersonByName(fbProfile["first_name"])
+                    user = getOrCreatePerson(name = fbProfile["first_name"], fbid = userID)
                     user.facebook_id = userID
                     user.facebook_photo = fbProfile["profile_pic"]
                     user.save()

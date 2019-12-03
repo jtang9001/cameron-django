@@ -241,7 +241,10 @@ class CheckIn(models.Model):
             raise ValidationError("Start date is too far in the future")
 
 
-def getOrCreatePersonByName(name):
+def getOrCreatePerson(name = None, fbid = None):
+    if fbid is not None and Person.objects.filter(facebook_id__exact = fbid).exists():
+        return Person.objects.get(facebook_id__exact = fbid)
+    
     name = cleanMsg(name)
     if Person.objects.filter(name__istartswith = name).exists():
         return Person.objects.filter(name__istartswith = name).first()
