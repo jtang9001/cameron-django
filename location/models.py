@@ -87,11 +87,11 @@ class Person(models.Model):
                 data=response_msg
             )
             
-            if 'message_id' in status:
-                break
-
             print(status.json())
             attempts += 1
+
+            if 'message_id' in status.json():
+                break
 
     def getScore(self):
         try:
