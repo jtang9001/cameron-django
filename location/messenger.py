@@ -296,7 +296,6 @@ def handleMessage(user: Person, inMsg, nlp):
                     sendForPlace(user, place)
             else:
                 user.send(f"💡 Too many places ({', '.join(place.name for place in refdPlaces)}) were referenced in your message.")
-            return
 
         elif len(refdPlaces) == 0:
             print("no places referenced")
@@ -351,6 +350,19 @@ def handleMessage(user: Person, inMsg, nlp):
                     for person in refdPeople:
                         makeNewCheckIn(user, person, place, start_time, end_time)
 
+                        if len(refdPeople) == 1 and user in refdPeople:
+                            qrs = [QuickReply("I'm leaving")]
+                        elif len(refdPeople) > 1 and user in refdPeople:
+                            qrs = [QuickReply("We're leaving", 
+                                payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
+                            qrs += [QuickReply(f"{person} left", img = person.facebook_photo) for person in refdPeople]
+                        elif len(refdPeople) == 1 and user not in refdPeople:
+                            qrs = [QuickReply(f"{next(iter(refdPeople))} left", img = next(iter(refdPeople)).facebook_photo)]
+                        elif len(refdPeople) > 1 and user not in refdPeople:
+                            qrs = [QuickReply("They're leaving", 
+                                payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
+                            qrs += [QuickReply(f"{person} left", img=person.facebook_photo) for person in refdPeople]
+
                 else:
                     if all((
                         len(refdPeople) == 1,
@@ -359,9 +371,11 @@ def handleMessage(user: Person, inMsg, nlp):
                     )):
                         if not isSubstringFor(msg, TRIGGERS["location_query"]):
                             user.send(f"💡 To check in, specify at least a place and a person (ex. 'I'm in Cam') or a place and a time (ex. 'Cam till 5').")
+                            qrs = [f"I'm in {place}"]
                     else:
                         start_time = timezone.now()
                         end_time = two_hrs_later()
+                        user.send(f"I'm assuming a duration of 2 hours for this check in since no end time was given. You can specify an end time (ex. 'I'm in {place} till 4') to overwrite this.")
                         for person in refdPeople:
                             for checkin in CheckIn.objects.filter(person = person, place = place):
                                 if checkin.is_fresh():
@@ -370,19 +384,14 @@ def handleMessage(user: Person, inMsg, nlp):
                                     break
                             else:
                                 makeNewCheckIn(user, person, place, start_time, end_time)
-
-                if len(refdPeople) == 1 and user in refdPeople:
-                    qrs = [QuickReply("I'm leaving", img=user.facebook_photo)]
-                elif len(refdPeople) > 1 and user in refdPeople:
-                    qrs = [QuickReply("We're leaving", 
-                        payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
-                    qrs += [QuickReply(f"{person} left", img = person.facebook_photo) for person in refdPeople]
-                elif len(refdPeople) == 1 and user not in refdPeople:
-                    qrs = [QuickReply(f"{next(iter(refdPeople))} left", img = next(iter(refdPeople)).facebook_photo)]
-                elif len(refdPeople) > 1 and user not in refdPeople:
-                    qrs = [QuickReply("They're leaving", 
-                        payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
-                    qrs += [QuickReply(f"{person} left", img=person.facebook_photo) for person in refdPeople]
+                        
+                        qrs = [
+                            QuickReply(
+                                f"Until {(start_time + timezone.timedelta(minutes = mins)).strftime('%H:%M')}",
+                                payload=f"{' '.join((person.name for person in refdPeople))} in {place} until {(start_time + timezone.timedelta(minutes = mins)).strftime('%H:%M')}"
+                            )
+                            for mins in range(30, 241, 30)
+                        ]
 
                 sendForPlace(user, place, 
                     quick_replies=QuickReplyArray(qrs))
