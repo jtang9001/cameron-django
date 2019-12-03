@@ -129,17 +129,17 @@ def sendForPlace(user, place, quick_replies = None):
             quick_replies=QuickReplyArray([f"I'm in {place}"]))
 
 
-def sendForPerson(user, person):
+def sendForPerson(user, person, quick_replies = None):
     checkins = person.checkin_set.all()
     checkinStrs = [checkin.prettyNoName() for checkin in checkins
                     if checkin.is_fresh() or checkin.is_future_fresh()]
 
     if len(checkinStrs) > 0:
         user.send(f"Here's where {person.name} has checked in:")
-        user.send("\n".join(checkinStrs))
+        user.send("\n".join(checkinStrs), quick_replies=quick_replies)
 
     else:
-        user.send(f"{person.name} isn't checked in anywhere")
+        user.send(f"{person.name} isn't checked in anywhere", quick_replies=quick_replies)
 
 
 def sendAllCheckIns(user):
@@ -222,19 +222,31 @@ def checkout(checkin, user, person, allowFuture = False):
     if checkin.is_fresh():
         user.send(f"Checking {person} out of {checkin.place} 💨")
         if person != user:
-            person.send(f"{user} checked you out of {checkin.place} 💨")
+            person.send(
+                f"{user} checked you out of {checkin.place} 💨",
+                quick_replies=QuickReplyArray([QuickReply(
+                    "Undo",
+                    payload=f"{person} in {checkin.place} until {timezone.localtime(checkin.end_time.strftime('%H:%M'))}"
+                )])
+            )
         checkin.scratch()
-        return True
+        return checkin
 
     elif allowFuture and checkin.is_future_fresh():
         user.send(f"❌ Deleting {person}'s upcoming check in at {checkin.prettyNoName()}.")
         if person != user:
-            person.send(f"{user} deleted your upcoming check in at {checkin.prettyNoName()}.")
+            person.send(
+                f"{user} deleted your upcoming check in at {checkin.prettyNoName()}.",
+                quick_replies=QuickReplyArray([QuickReply(
+                    "Undo",
+                    payload=f"{person} in {checkin.place} from {timezone.localtime(checkin.start_time.strftime('%H:%M'))} to {timezone.localtime(checkin.end_time.strftime('%H:%M'))}"
+                )])
+            )
         checkin.scratch()
-        return True
+        return checkin
 
     else:
-        return False
+        return None
 
 
 def handleMessage(user: Person, inMsg, nlp):
@@ -300,18 +312,20 @@ def handleMessage(user: Person, inMsg, nlp):
         elif len(refdPlaces) == 0:
             print("no places referenced")
             if doCheckOut:
-                sentMsg = False
+                checkedOut = []
                 if len(refdPeople) == 0:
                     refdPeople.add(user)
 
                 for person in refdPeople:
                     checkIns = CheckIn.objects.filter(person = person)
                     for checkin in checkIns:
-                        sentMsg = checkout(checkin, user, person, allowFuture=False)
+                        newCheckout = checkout(checkin, user, person, allowFuture=False)
+                        if newCheckout is not None:
+                            checkedOut.append(newCheckout)
 
                     sendForPerson(user, person)
 
-                if not sentMsg:
+                if len(checkedOut) == 0:
                     user.send("💡 To delete someone's planned check in, specify the place they're no longer going to.")
             
             elif len(refdPeople) != 0:
@@ -331,12 +345,16 @@ def handleMessage(user: Person, inMsg, nlp):
 
             if doCheckOut:
 
+                checkedOut = []
+
                 print("checking out")
                 for person in refdPeople:
                     checkIns = CheckIn.objects.filter(person = person, place = place)
 
                     for checkin in checkIns:
-                        checkout(checkin, user, person)
+                        newCheckOut = checkout(checkin, user, person)
+                        if newCheckOut is not None:
+                            checkedOut.append(newCheckOut)
 
                     sendForPerson(user, person)
 
