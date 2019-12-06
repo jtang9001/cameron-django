@@ -152,7 +152,6 @@ class Place(models.Model):
 
     def hasRelevantCheckIns(self):
         for checkin in self.checkin_set.all():
-            print(checkin)
             if checkin.is_fresh() or checkin.is_future_fresh():
                 return True
         return False
@@ -224,7 +223,6 @@ class CheckIn(models.Model):
             (self.end_time - other.start_time).total_seconds(),
             (other.end_time - self.start_time).total_seconds(),
             key = lambda x: abs(x))
-        print("In checking if touches:", minTimeGap)
         return (
             self.place == other.place and
             abs( minTimeGap ) < 300

@@ -61,7 +61,6 @@ def getBestEntityFromSubset(entities, subset):
     mostLikelyEntity = None
 
     for entityType in subset:
-        print(entityType)
         if entityType in entities:
             entity = entities[entityType][0]
             if entity["confidence"] > maxConf:

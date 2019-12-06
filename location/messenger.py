@@ -108,7 +108,7 @@ def removeSubstrings(string: str, arrOfSubstrings):
 
 
 def sendForPlace(user, place, quick_replies = None):
-    print(place)
+    print("Send for", place)
 
     checkins = CheckIn.objects.filter(place = place)
     freshCheckIns = [checkin for checkin in checkins if checkin.is_fresh()]
@@ -220,7 +220,6 @@ def makeNewCheckIn(user, person, place, start_time, end_time):
 
 def checkout(checkin, user, person, allowFuture = False):
     #returns if a message was sent or not
-    print(checkin)
 
     if checkin.is_fresh():
         user.send(
