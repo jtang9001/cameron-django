@@ -343,8 +343,8 @@ def handleMessage(user: Person, inMsg, nlp):
 
                     sendForPerson(user, person, quick_replies=sendQr)
 
-                if len(checkedOut) == 0:
-                    user.send("💡 To delete someone's planned check in, specify the place they're no longer going to.")
+                if qr is None:
+                    user.send("💡 To delete someone's planned check in, specify the place they're no longer going to.", quick_replies=sendQr)
             
             elif len(refdPeople) != 0:
                 for person in refdPeople:
@@ -379,6 +379,17 @@ def handleMessage(user: Person, inMsg, nlp):
             else:
                 entityType, entity = getBestEntityFromSubset(nlp["entities"], ["datetime", "duration"])
 
+                if len(refdPeople) == 1 and user in refdPeople:
+                    qrs = [QuickReply("I'm leaving")]
+                elif len(refdPeople) > 1 and user in refdPeople:
+                    qrs = [QuickReply("We're leaving", 
+                        payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
+                elif len(refdPeople) == 1 and user not in refdPeople:
+                    qrs = [QuickReply(f"{next(iter(refdPeople))} left", img = next(iter(refdPeople)).facebook_photo)]
+                elif len(refdPeople) > 1 and user not in refdPeople:
+                    qrs = [QuickReply("They're leaving", 
+                        payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
+
                 if entityType is not None:
                     print("dt detected. checking in")
                     start_time, end_time = nlpParseTime(user, entityType, entity)
@@ -386,18 +397,10 @@ def handleMessage(user: Person, inMsg, nlp):
                     for person in refdPeople:
                         makeNewCheckIn(user, person, place, start_time, end_time)
 
-                        if len(refdPeople) == 1 and user in refdPeople:
-                            qrs = [QuickReply("I'm leaving")]
-                        elif len(refdPeople) > 1 and user in refdPeople:
-                            qrs = [QuickReply("We're leaving", 
-                                payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
-                            qrs += [QuickReply(f"{person} left", img = person.facebook_photo) for person in refdPeople]
-                        elif len(refdPeople) == 1 and user not in refdPeople:
-                            qrs = [QuickReply(f"{next(iter(refdPeople))} left", img = next(iter(refdPeople)).facebook_photo)]
-                        elif len(refdPeople) > 1 and user not in refdPeople:
-                            qrs = [QuickReply("They're leaving", 
-                                payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
-                            qrs += [QuickReply(f"{person} left", img=person.facebook_photo) for person in refdPeople]
+                    if len(refdPeople) > 1 and user in refdPeople:
+                        qrs += [QuickReply(f"{person} left", img = person.facebook_photo) for person in refdPeople]
+                    elif len(refdPeople) > 1 and user not in refdPeople:
+                        qrs += [QuickReply(f"{person} left", img=person.facebook_photo) for person in refdPeople]
 
                 else:
                     if all((
@@ -420,7 +423,7 @@ def handleMessage(user: Person, inMsg, nlp):
                             else:
                                 makeNewCheckIn(user, person, place, start_time, end_time)
                         
-                        qrs = [
+                        qrs += [
                             QuickReply(
                                 f"Until {(timezone.localtime(start_time + timezone.timedelta(minutes = mins))).strftime('%H:%M')}",
                                 payload=f"{' '.join((person.name for person in refdPeople))} in {place} until {(timezone.localtime(start_time + timezone.timedelta(minutes = mins))).strftime('%H:%M')}"
