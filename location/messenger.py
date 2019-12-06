@@ -376,7 +376,10 @@ def handleMessage(user: Person, inMsg, nlp):
                     sendForPerson(user, person, quick_replies=sendQr)
 
             else:
-                entityType, entity = getBestEntityFromSubset(nlp["entities"], ["datetime", "duration"])
+                try:
+                    entityType, entity = getBestEntityFromSubset(nlp["entities"], ["datetime", "duration"])
+                except TypeError:
+                    entityType, entity = None, None
 
                 if len(refdPeople) == 1 and user in refdPeople:
                     qrs = [QuickReply("I'm leaving",
