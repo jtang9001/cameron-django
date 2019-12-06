@@ -15,7 +15,7 @@ class QuickReply:
         self.text = text
         self.payload = text if payload is None else payload
         self.img = img
-    
+
     def getDict(self):
         returnDict = {
             "content_type": "text",
@@ -36,7 +36,7 @@ class QuickReplyArray:
                 self.qrs.append(item)
             else:
                 self.qrs.append(QuickReply(str(item)))
-    
+
     def getList(self):
         return [qr.getDict() for qr in self.qrs]
 
@@ -116,7 +116,7 @@ def sendForPlace(user, place, quick_replies = None):
 
     if len(freshCheckIns) > 0:
         user.send(f"Here's who's in {place.name}:")
-        user.send("\n".join(checkin.prettyNoPlace() for checkin in freshCheckIns), 
+        user.send("\n".join(checkin.prettyNoPlace() for checkin in freshCheckIns),
             quick_replies=quick_replies)
 
     if len(futureCheckIns) > 0:
@@ -161,10 +161,10 @@ def sendIncomprehension(user, origMsg):
     user.send("💡 Try saying, 'locations', 'who's in Cam', 'where's Jiayi', 'I'll be in ECHA in 5', or something like that.")
     user.send("You can send suggestions to https://github.com/jtang9001/cameron-django/issues. Thanks!",
         quick_replies=QuickReplyArray([
-            "Locations", 
+            "Locations",
             "Who's checked in?",
-            f"Who's in {random.choice(Place.objects.all())}?", 
-            QuickReply(f"Where's {randomPerson}?", img=randomPerson.facebook_photo), 
+            f"Who's in {random.choice(Place.objects.all())}?",
+            QuickReply(f"Where's {randomPerson}?", img=randomPerson.facebook_photo),
             "Leaderboard"
         ])
     )
@@ -328,7 +328,7 @@ def handleMessage(user: Person, inMsg, nlp):
         elif len(refdPlaces) == 0:
             print("no places referenced")
             if doCheckOut:
-                
+
                 sendQr = None
 
                 if len(refdPeople) == 0:
@@ -345,7 +345,7 @@ def handleMessage(user: Person, inMsg, nlp):
 
                 if qr is None:
                     user.send("💡 To delete someone's planned check in, specify the place they're no longer going to.", quick_replies=sendQr)
-            
+
             elif len(refdPeople) != 0:
                 for person in refdPeople:
                     sendForPerson(user, person)
@@ -380,18 +380,18 @@ def handleMessage(user: Person, inMsg, nlp):
                 entityType, entity = getBestEntityFromSubset(nlp["entities"], ["datetime", "duration"])
 
                 if len(refdPeople) == 1 and user in refdPeople:
-                    qrs = [QuickReply("I'm leaving", 
+                    qrs = [QuickReply("I'm leaving",
                         payload=f"{user} leaving {place}")]
                 elif len(refdPeople) > 1 and user in refdPeople:
-                    qrs = [QuickReply("We're leaving", 
+                    qrs = [QuickReply("We're leaving",
                         payload=f"{' '.join((person.name for person in refdPeople))} leaving {place}")]
                 elif len(refdPeople) == 1 and user not in refdPeople:
                     refdPerson = next(iter(refdPeople))
-                    qrs = [QuickReply(f"{refdPerson} left", 
+                    qrs = [QuickReply(f"{refdPerson} left",
                         payload=f"{refdPerson} leaving {place}",
                         img=refdPerson.facebook_photo)]
                 elif len(refdPeople) > 1 and user not in refdPeople:
-                    qrs = [QuickReply("They're leaving", 
+                    qrs = [QuickReply("They're leaving",
                         payload=f"{' '.join((person.name for person in refdPeople))} leaving {place}")]
 
                 if entityType is not None:
@@ -402,7 +402,7 @@ def handleMessage(user: Person, inMsg, nlp):
                         makeNewCheckIn(user, person, place, start_time, end_time)
 
                     if len(refdPeople) > 1:
-                        qrs += [QuickReply(f"{person} left", 
+                        qrs += [QuickReply(f"{person} left",
                             payload=f"{person} leaving {place}",
                             img = person.facebook_photo) for person in refdPeople]
 
@@ -427,16 +427,16 @@ def handleMessage(user: Person, inMsg, nlp):
                                     break
                             else:
                                 makeNewCheckIn(user, person, place, start_time, end_time)
-                        
+
                         qrs += [
                             QuickReply(
                                 f"Until {(timezone.localtime(round_time + timezone.timedelta(minutes = mins))).strftime('%H:%M')}",
                                 payload=f"{' '.join((person.name for person in refdPeople))} in {place} until {(timezone.localtime(start_time + timezone.timedelta(minutes = mins))).strftime('%H:%M')}"
                             )
-                            for mins in range(30, 241, 30)
+                            for mins in range(0, 181, 30)
                         ]
 
-                sendForPlace(user, place, 
+                sendForPlace(user, place,
                     quick_replies=QuickReplyArray(qrs))
 
         if bestNLPtype == "bye" or bestNLPtype == "thanks":

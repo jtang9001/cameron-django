@@ -20,8 +20,9 @@ def next_rounded_time(start = None, delta = timezone.timedelta(minutes=30)):
     if start == None:
         start = timezone.now()
 
-    rounded = start + (datetime.datetime.min - start) % delta
-    if rounded - timezone.now() < timezone.timedelta(minutes=15):
+    rounded = start + (timezone.make_aware(datetime.datetime(2000, 1, 1)) - start) % delta
+    if start + timezone.timedelta(minutes=15) > rounded:
+        print("Adding time to nearest time for practicality")
         rounded += timezone.timedelta(minutes=30)
     return rounded
 
