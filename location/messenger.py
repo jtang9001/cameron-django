@@ -230,15 +230,14 @@ def checkout(checkin, user, person, allowFuture = False):
             person.send(
                 f"{user} checked you out of {checkin.place} 💨",
                 quick_replies=QuickReplyArray([QuickReply(
-                    f"I'm in {checkin.place}",
-                    payload=f"{person} in {checkin.place}"
+                    f"Undo for {person}",
+                    payload=f"{person} in {checkin.place} {checkin.prettyTime()}"
                 )])
             )
         checkin.scratch()
         return QuickReplyArray([QuickReply(
-            f"Check in {person}",
-            payload=f"{person} in {checkin.place}",
-            img=person.facebook_photo
+            "Undo",
+            payload=f"{person} in {checkin.place} {checkin.prettyTime()}"
         )])
 
     elif allowFuture and checkin.is_future_fresh():
@@ -250,15 +249,14 @@ def checkout(checkin, user, person, allowFuture = False):
             person.send(
                 f"{user} deleted your upcoming check in at {checkin.prettyNoName()}.",
                 quick_replies=QuickReplyArray([QuickReply(
-                    f"I'm in {checkin.place}",
-                    payload=f"{person} in {checkin.place}"
+                    "Undo",
+                    payload=f"{person} in {checkin.place} {checkin.prettyTime()}"
                 )])
             )
         checkin.scratch()
         return QuickReplyArray([QuickReply(
-            f"Check in {person}",
-            payload=f"{person} in {checkin.place}",
-            img=person.facebook_photo
+            f"Undo for {person}",
+            payload=f"{person} in {checkin.place} {checkin.prettyTime()}"
         )])
 
     else:
