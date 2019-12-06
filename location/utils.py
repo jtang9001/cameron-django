@@ -1,3 +1,5 @@
+import datetime
+
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -13,6 +15,15 @@ def two_hrs_later(start = None):
 def is_later_than_now(val):
     if timezone.now() - val > timezone.timedelta(minutes=30):
         raise ValidationError("Date/time is too far in the past")
+
+def next_rounded_time(start = None, delta = timezone.timedelta(minutes=30)):
+    if start == None:
+        start = timezone.now()
+
+    rounded = start + (datetime.datetime.min - start) % delta
+    if rounded - timezone.now() < timezone.timedelta(minutes=15):
+        rounded += timezone.timedelta(minutes=30)
+    return rounded
 
 def nlpParseTime(user, entityType, entity):
     if entityType == "datetime":

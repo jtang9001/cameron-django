@@ -4,7 +4,7 @@ import random
 
 from .models import Place, CheckIn, Person, getPersonWithPossibleS
 from .tokens import FB_ACCESS_TOKEN
-from .utils import cleanMsg, nlpParseTime, two_hrs_later, getBestEntityFromSubset
+from .utils import cleanMsg, nlpParseTime, two_hrs_later, getBestEntityFromSubset, next_rounded_time
 
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -356,7 +356,7 @@ def handleMessage(user: Person, inMsg, nlp):
 
         elif len(refdPlaces) == 1:
             print("exactly one place referenced")
-            place = refdPlaces.pop()
+            place = next(iter(refdPlaces))
 
             if len(refdPeople) == 0:
                 refdPeople.add(user)
@@ -380,15 +380,19 @@ def handleMessage(user: Person, inMsg, nlp):
                 entityType, entity = getBestEntityFromSubset(nlp["entities"], ["datetime", "duration"])
 
                 if len(refdPeople) == 1 and user in refdPeople:
-                    qrs = [QuickReply("I'm leaving")]
+                    qrs = [QuickReply("I'm leaving", 
+                        payload=f"{user} leaving {place}")]
                 elif len(refdPeople) > 1 and user in refdPeople:
                     qrs = [QuickReply("We're leaving", 
-                        payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
+                        payload=f"{' '.join((person.name for person in refdPeople))} leaving {place}")]
                 elif len(refdPeople) == 1 and user not in refdPeople:
-                    qrs = [QuickReply(f"{next(iter(refdPeople))} left", img = next(iter(refdPeople)).facebook_photo)]
+                    refdPerson = next(iter(refdPeople))
+                    qrs = [QuickReply(f"{refdPerson} left", 
+                        payload=f"{refdPerson} leaving {place}",
+                        img=refdPerson.facebook_photo)]
                 elif len(refdPeople) > 1 and user not in refdPeople:
                     qrs = [QuickReply("They're leaving", 
-                        payload=f"{' '.join((person.name for person in refdPeople))} leaving")]
+                        payload=f"{' '.join((person.name for person in refdPeople))} leaving {place}")]
 
                 if entityType is not None:
                     print("dt detected. checking in")
@@ -397,10 +401,10 @@ def handleMessage(user: Person, inMsg, nlp):
                     for person in refdPeople:
                         makeNewCheckIn(user, person, place, start_time, end_time)
 
-                    if len(refdPeople) > 1 and user in refdPeople:
-                        qrs += [QuickReply(f"{person} left", img = person.facebook_photo) for person in refdPeople]
-                    elif len(refdPeople) > 1 and user not in refdPeople:
-                        qrs += [QuickReply(f"{person} left", img=person.facebook_photo) for person in refdPeople]
+                    if len(refdPeople) > 1:
+                        qrs += [QuickReply(f"{person} left", 
+                            payload=f"{person} leaving {place}",
+                            img = person.facebook_photo) for person in refdPeople]
 
                 else:
                     if all((
@@ -414,6 +418,7 @@ def handleMessage(user: Person, inMsg, nlp):
                     else:
                         start_time = timezone.now()
                         end_time = two_hrs_later()
+                        round_time = next_rounded_time()
                         for person in refdPeople:
                             for checkin in CheckIn.objects.filter(person = person, place = place):
                                 if checkin.is_fresh():
@@ -425,7 +430,7 @@ def handleMessage(user: Person, inMsg, nlp):
                         
                         qrs += [
                             QuickReply(
-                                f"Until {(timezone.localtime(start_time + timezone.timedelta(minutes = mins))).strftime('%H:%M')}",
+                                f"Until {(timezone.localtime(round_time + timezone.timedelta(minutes = mins))).strftime('%H:%M')}",
                                 payload=f"{' '.join((person.name for person in refdPeople))} in {place} until {(timezone.localtime(start_time + timezone.timedelta(minutes = mins))).strftime('%H:%M')}"
                             )
                             for mins in range(30, 241, 30)
