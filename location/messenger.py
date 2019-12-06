@@ -370,7 +370,7 @@ def handleMessage(user: Person, inMsg, nlp):
                     checkIns = CheckIn.objects.filter(person = person, place = place)
 
                     for checkin in checkIns:
-                        qr = checkout(checkin, user, person)
+                        qr = checkout(checkin, user, person, allowFuture=True)
                         if qr is not None:
                             sendQr = qr
 
