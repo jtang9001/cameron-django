@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Place, CheckIn, Person, getOrCreatePerson
+from .models import Place, CheckIn, Person, getOrCreatePerson, getClosestPlace
 from .forms import CheckInForm
 from .tokens import FB_VERIFY_TOKEN
 from .messenger import handleMessage, getProfileFromPSID
@@ -140,10 +140,20 @@ def messenger(request):
 
                     if "quick_reply" in message["message"]:
                         msg = message["message"]["quick_reply"]["payload"]
+                    elif "attachments" in message["message"]:
+                        try:
+                            closestPlace = getClosestPlace(**message["message"]["attachments"][0]["payload"]["coordinates"])
+                            msg = f"{user.name} in {closestPlace}"
+                        except KeyError:
+                            pass
                     else:
                         msg = message['message']['text']
-                    nlp = message['message']['nlp']
-                    print(nlp)
+
+                    if "nlp" in message["message"]:
+                        nlp = message['message']['nlp']
+                        print(nlp)
+                    else:
+                        nlp = None
 
                     handleMessage(user, msg, nlp)
             return HttpResponse("Webhook OK", status=200)

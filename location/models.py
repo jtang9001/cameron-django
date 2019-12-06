@@ -134,6 +134,8 @@ class Place(models.Model):
     )
     photo = models.URLField(blank=True, null=True)
     aliases = models.TextField(blank=True, null=True)
+    latitude = models.FloatField(blank=True, null=True)
+    longitude = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -257,3 +259,7 @@ def getPersonWithPossibleS(name: str):
         name = name[:-1]
     return Person.objects.filter(name__istartswith = name) | Person.objects.filter(nicknames__icontains = name)
 
+def getClosestPlace(lat, long):
+    places = Place.objects.filter(longitude__isnull = False, latitude__isnull = False)
+    return min(places, 
+        key = lambda place: ((lat - place.latitude)**2 + (long - place.longitude)**2)**0.5)

@@ -285,7 +285,7 @@ def handleMessage(user: Person, inMsg, nlp):
         personGiven = False
         bestNLPtype = None
 
-        if any((key in nlp["entities"] for key in SMALL_TALK_ENTITIES)):
+        if nlp is not None and any((key in nlp["entities"] for key in SMALL_TALK_ENTITIES)):
             bestNLPtype, bestNLPentity = getBestEntityFromSubset(nlp["entities"], SMALL_TALK_ENTITIES)
 
         if bestNLPtype == "greetings":
